@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="product_stock_location_tree_view">
+            <field name="name">product.stock.location.tree</field>
+            <field name="model">product.stock.location</field>
+            <field name="inherit_id" ref="product_stock_location.product_stock_location_tree_view"/>
+            <field name="arch" type="xml">
+                <field name="product_location_qty" position="after">
+                    <field name="product_location_qty_available_not_res"/>
+                </field>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_stock_location_form_view">
+            <field name="name">product.stock.location.form</field>
+            <field name="model">product.stock.location</field>
+            <field name="inherit_id" ref="product_stock_location.product_stock_location_form_view"/>
+            <field name="arch" type="xml">
+                <field name="product_location_qty" position="after">
+                    <field name="product_location_qty_available_not_res"/>
+                </field>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_stock_location_search_view">
+            <field name="name">product.stock.location.search</field>
+            <field name="model">product.stock.location</field>
+            <field name="inherit_id" ref="product_stock_location.product_stock_location_search_view"/>
+            <field name="arch" type="xml">
+                <field name="product_location_qty" position="after">
+                    <field name="product_location_qty_available_not_res"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -4,7 +4,7 @@
 # © 2016 Aleph Objects, Inc. (https://www.alephobjects.com/)
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
-from openerp import api, fields, models, _
+from openerp import api, fields, models
 from .stock_warehouse_orderpoint import _PRIORITY_LEVEL
 
 
@@ -43,7 +43,7 @@ class MrpProduction(models.Model):
             if rec.state not in ['done', 'cancel']:
                 rec.execution_priority_level = \
                     rec.orderpoint_id.execution_priority_level
-                rec.execution_priority = rec.orderpoint_id.execution_priority
+                rec.on_hand_percent = rec.orderpoint_id.on_hand_percent
 
     def _search_execution_priority(self, operator, value):
         """Search on the execution priority by evaluating on all
@@ -77,6 +77,5 @@ class MrpProduction(models.Model):
         selection=_PRIORITY_LEVEL,
         compute="_compute_execution_priority",
         search="_search_execution_priority")
-    execution_priority = fields.Char(
-        string="Buffer On-Hand Alert",
-        compute='_compute_execution_priority')
+    on_hand_percent = fields.Float(string="On Hand/TOG (%)",
+                                   compute="_compute_execution_priority")

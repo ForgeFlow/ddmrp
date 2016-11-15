@@ -79,4 +79,3 @@ class StockDemandEstimate(models.Model):
             days = (abs(overlap_date_to-overlap_date_from)).days + 1
             return days * self.daily_qty
         return 0.0
-
