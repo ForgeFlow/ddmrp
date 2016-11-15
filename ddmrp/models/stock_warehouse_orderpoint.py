@@ -122,7 +122,8 @@ class StockWarehouseOrderpoint(models.Model):
         for rec in self:
             if rec.product_location_qty_available_not_res >= rec.top_of_red:
                 rec.execution_priority_level = 'green'
-            elif rec.product_location_qty >= rec.top_of_red*0.5:
+            elif rec.product_location_qty_available_not_res >= \
+                    rec.top_of_red*0.5:
                 rec.execution_priority_level = 'yellow'
             else:
                 rec.execution_priority_level = 'red'
@@ -145,14 +146,13 @@ class StockWarehouseOrderpoint(models.Model):
         else:
             date_to = fields.Date.to_string(fields.date.today() + timedelta(
                 days=horizon))
-        date_from = fields.Date.to_string(fields.date.today())
         locations = self.env['stock.location'].search(
             [('id', 'child_of', [self.location_id.id])])
         return [('product_id', '=', self.product_id.id),
                 ('state', 'in', ['draft', 'waiting', 'confirmed',
                                  'assigned']),
                 ('location_id', 'in', locations.ids),
-                ('date', '>=', date_from), ('date', '<=', date_to)]
+                ('date', '<=', date_to)]
 
     @api.multi
     @api.depends("outgoing_location_qty", "product_id", "location_id")
