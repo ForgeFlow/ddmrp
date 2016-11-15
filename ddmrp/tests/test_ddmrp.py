@@ -7,8 +7,6 @@
 import openerp.tests.common as common
 from openerp import fields
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-import calendar
 
 
 class TestDdmrp(common.TransactionCase):
@@ -33,6 +31,7 @@ class TestDdmrp(common.TransactionCase):
         self.estimateModel = self.env['stock.demand.estimate']
         self.estimatePeriodModel = self.env['stock.demand.estimate.period']
         self.aducalcmethodModel = self.env['product.adu.calculation.method']
+        self.locationModel = self.env['stock.location']
 
         # Refs
         self.main_company = self.env.ref('base.main_company')
@@ -52,11 +51,19 @@ class TestDdmrp(common.TransactionCase):
              'default_code': 'A',
              })
 
+        self.binA = self.locationModel.create({
+            'usage': 'internal',
+            'name': 'Bin A',
+            'location_id': self.stock_location.id,
+            'company_id': self.main_company.id
+        })
+
         self.quantModel.create(
-            {'location_id': self.stock_location.id,
+            {'location_id': self.binA.id,
              'company_id': self.main_company.id,
              'product_id': self.productA.id,
              'qty': 200.0})
+
 
     def create_pickingoutA(self, date_move, qty):
         return self.pickingModel.create({
@@ -115,10 +122,10 @@ class TestDdmrp(common.TransactionCase):
         pickingOuts += self.create_pickingoutA(date_move, 60)
         date_move = datetime.today() - timedelta(days=60)
         pickingOuts += self.create_pickingoutA(date_move, 60)
-
-        pickingOuts.action_confirm()
-        pickingOuts.action_assign()
-        pickingOuts.action_done()
+        for picking in pickingOuts:
+            picking.action_confirm()
+            picking.action_assign()
+            picking.action_done()
 
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
@@ -178,7 +185,7 @@ class TestDdmrp(common.TransactionCase):
         estimate_period_next_120 = self.createEstimatePeriod(
             'test_next_120', date_from, date_to)
 
-        self.estimateModel.create({
+        estimate = self.estimateModel.create({
             'period_id': estimate_period_next_120.id,
             'product_id': self.productA.id,
             'product_uom_qty': 120,

@@ -8,7 +8,7 @@
     "name": "DDMRP",
     "summary": "Demand-driven MRP",
     "version": "8.0.1.0.0",
-    "author": "Eficent Business and IT Consulting Services S.L,"
+    "author": "Eficent,"
               "Aleph Objects, Inc.,"
               "Odoo Community Association (OCA)",
     "website": "http://www.eficent.com",
@@ -29,8 +29,10 @@
              "views/product_adu_calculation_method_view.xml",
              "views/stock_warehouse_orderpoint_view.xml",
              "views/procurement_order_view.xml",
-             "views/mrp_production_view.xml"
+             "views/mrp_production_view.xml",
+             "views/stock_move_view.xml"
              ],
+    'pre_init_hook': 'pre_init_hook',
     "license": "AGPL-3",
     'installable': True,
     'application': True,

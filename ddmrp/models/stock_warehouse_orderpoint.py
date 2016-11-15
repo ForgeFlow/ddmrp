@@ -36,8 +36,24 @@ class StockWarehouseOrderpoint(models.Model):
     _inherit = 'stock.warehouse.orderpoint'
     _description = "Stock Buffer"
 
+    @api.depends("incoming_move_ids.product_id",
+                 "incoming_move_ids.location_dest_id",
+                 "incoming_move_ids.product_uom_qty",
+                 "incoming_move_ids.orderpoint_id",
+                 "incoming_move_ids.state",
+                 "incoming_move_ids",
+                 "outgoing_move_ids.product_id",
+                 "outgoing_move_ids.location_id",
+                 "outgoing_move_ids.product_uom_qty",
+                 "outgoing_move_ids.state",
+                 "outgoing_move_ids",
+                 "adu_fixed",
+                 "demand_estimate_ids.product_id",
+                 "demand_estimate_ids.location_id",
+                 "demand_estimate_ids.product_uom_qty",
+                 "demand_estimate_ids",
+                 "adu_calculation_method")
     @api.multi
-    @api.depends("adu_calculation_method", "adu_fixed")
     def _compute_adu(self):
         for rec in self:
             if rec.adu_calculation_method.method == 'fixed':
@@ -62,7 +78,7 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
-                 "red_zone_qty")
+                 "red_zone_qty", "order_cycle", "minimum_order_quantity")
     def _compute_green_zone(self):
         for rec in self:
             # Using imposed or desired minimum order cycle
@@ -89,6 +105,8 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
+                 "buffer_profile_id.variability_factor",
+                 "buffer_profile_id.replenish_method",
                  "red_zone_qty")
     def _compute_yellow_zone(self):
         for rec in self:
@@ -247,6 +265,7 @@ class StockWarehouseOrderpoint(models.Model):
     dlt = fields.Float(string="Decoupled Lead Time (days)")
     adu = fields.Float(string="Average Daily Usage (ADU)",
                        compute="_compute_adu",
+                       store=True,
                        default=0.0, digits=UNIT)
     adu_calculation_method = fields.Many2one(
         comodel_name="product.adu.calculation.method",
@@ -258,34 +277,38 @@ class StockWarehouseOrderpoint(models.Model):
                                           digits=UNIT)
     red_base_qty = fields.Float(string="Red Base Qty",
                                 compute="_compute_red_zone",
-                                digits=UNIT)
+                                digits=UNIT, store=True)
     red_safety_qty = fields.Float(string="Red Safety Qty",
                                   compute="_compute_red_zone",
-                                  digits=UNIT)
+                                  digits=UNIT, store=True)
     red_zone_qty = fields.Float(string="Red Zone Qty",
                                 compute="_compute_red_zone",
-                                digits=UNIT)
+                                digits=UNIT, store=True)
     top_of_red = fields.Float(string="Top of Red",
                               related="red_zone_qty")
     green_zone_qty = fields.Float(string="Green Zone Qty",
                                   compute="_compute_green_zone",
-                                  digits=UNIT)
+                                  digits=UNIT, store=True)
     green_zone_lt_factor = fields.Float(string="Green Zone Lead Time Factor",
                                         compute="_compute_green_zone",
-                                        help="Green zone Lead Time Factor")
+                                        help="Green zone Lead Time Factor",
+                                        store=True)
     green_zone_moq = fields.Float(string="Green Zone Minimum Order Quantity",
                                   compute="_compute_green_zone",
                                   help="Green zone minimum order quantity",
-                                  digits=UNIT)
+                                  digits=UNIT, store=True)
     green_zone_oc = fields.Float(string="Green Zone Order Cycle",
                                  compute="_compute_green_zone",
-                                 help="Green zone order cycle")
+                                 help="Green zone order cycle", store=True)
     yellow_zone_qty = fields.Float(string="Yellow Zone Qty",
-                                   compute="_compute_yellow_zone", digits=UNIT)
+                                   compute="_compute_yellow_zone",
+                                   digits=UNIT, store=True)
     top_of_yellow = fields.Float(string="Top of Yellow",
-                                 compute="_compute_yellow_zone", digits=UNIT)
+                                 compute="_compute_yellow_zone",
+                                 digits=UNIT, store=True)
     top_of_green = fields.Float(string="Top of Green",
-                                compute="_compute_green_zone", digits=UNIT)
+                                compute="_compute_green_zone", digits=UNIT,
+                                store=True)
     order_spike_horizon = fields. Float(string="Order Spike Horizon")
     order_spike_threshold = fields.Float(
         string="Order Spike Threshold",
@@ -328,6 +351,16 @@ class StockWarehouseOrderpoint(models.Model):
     product_location_qty_available_not_res = fields.Float(
         string='Quantity On Location (Unreserved)', digits=UNIT,
         compute='_compute_product_available_qty')
+
+    # Fields used to compute other stored fields
+    incoming_move_ids = fields.One2many(comodel_name='stock.move',
+                                        inverse_name='orderpoint_dest_id',
+                                        string="Incoming moves")
+    outgoing_move_ids = fields.One2many('stock.move', 'orderpoint_id',
+                                        string="Outgoing moves")
+    demand_estimate_ids = fields.One2many(
+        comodel_name='stock.demand.estimate', inverse_name='orderpoint_id',
+        string='Demand estimates')
 
     @api.multi
     @api.onchange("red_zone_qty")
@@ -461,8 +494,7 @@ class StockWarehouseOrderpoint(models.Model):
             date_from = fields.Date.to_string(
                 fields.date.today() - timedelta(days=horizon))
         date_to = fields.Date.today()
-        locations = self.location_id
-        locations += self.env['stock.location'].search(
+        locations = self.env['stock.location'].search(
             [('id', 'child_of', [self.location_id.id])])
         if self.adu_calculation_method.use_estimates:
             qty = 0.0
@@ -528,3 +560,32 @@ class StockWarehouseOrderpoint(models.Model):
                 qty += group['product_qty']
             return float_round(qty / horizon,
                                precision_rounding=self.product_uom.rounding)
+
+    @api.model
+    def create(self, vals):
+        orderpoint = super(StockWarehouseOrderpoint, self).create(vals)
+
+        # Assign this ordepoint to all moves for the product and child
+        # locations
+        locations = self.env['stock.location'].search(
+            [('id', 'child_of', orderpoint.location_id.id)])
+        out_moves = self.env['stock.move'].search(
+            [('product_id', '=', orderpoint.product_id.id),
+             ('location_id', 'in', locations.ids)])
+        for out_move in out_moves:
+            out_move.orderpoint_id = orderpoint
+        in_moves = self.env['stock.move'].search(
+            [('product_id', '=', orderpoint.product_id.id),
+             ('location_dest_id', 'in', locations.ids)])
+        for in_move in in_moves:
+            in_move.orderpoint_dest_id = orderpoint
+
+        # Assign this orderpoint to demand estimates for the product and
+        # child locations
+        estimates = self.env['stock.demand.estimate'].search(
+            [('product_id', '=', orderpoint.product_id.id),
+             ('location_id', 'in', locations.ids)])
+        for estimate in estimates:
+            estimate.orderpoint_id = orderpoint
+
+        return orderpoint
