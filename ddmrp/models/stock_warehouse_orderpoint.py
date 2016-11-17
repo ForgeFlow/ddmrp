@@ -327,7 +327,7 @@ class StockWarehouseOrderpoint(models.Model):
         digits=UNIT)
     product_location_qty_available_not_res = fields.Float(
         string='Quantity On Location (Unreserved)', digits=UNIT,
-        compute='_product_available_qty')
+        compute='_compute_product_available_qty')
 
     @api.multi
     @api.onchange("red_zone_qty")
@@ -393,8 +393,8 @@ class StockWarehouseOrderpoint(models.Model):
         return super(StockWarehouseOrderpoint, self).name_get()
 
     @api.multi
-    def _product_available_qty(self):
-        super(StockWarehouseOrderpoint, self)._product_available_qty()
+    def _compute_product_available_qty(self):
+        super(StockWarehouseOrderpoint, self)._compute_product_available_qty()
         for rec in self:
             product_available = rec.product_id.with_context(
                 location=rec.location_id.id
