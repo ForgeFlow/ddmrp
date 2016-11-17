@@ -130,13 +130,6 @@ class TestDdmrp(common.TransactionCase):
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
-        # Create a move older than 120 days
-        date_move = datetime.today() - timedelta(days=150)
-        pickingOuts += self.create_pickingoutA(date_move, 1)
-
-        # The extra move should not affect to the average ADU
-        self.assertEqual(orderpointA.adu, to_assert_value)
-
     def test_adu_calculation_future_120_days_actual(self):
         method = self.aducalcmethodModel.create({
             'name': 'Future actual demand (120 days)',
