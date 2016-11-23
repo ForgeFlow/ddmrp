@@ -4,7 +4,7 @@
 # © 2016 Aleph Objects, Inc. (https://www.alephobjects.com/)
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
-from ddmrp.init_methods import init_methods
+from openerp.addons.ddmrp.init_methods import init_methods
 
 
 def pre_init_hook(cr):
