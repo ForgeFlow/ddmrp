@@ -3,8 +3,4 @@
 #   (http://www.eficent.com)
 # © 2016 Aleph Objects, Inc. (https://www.alephobjects.com/)
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
-
-from . import models
-from . import wizards
 from . import init_methods
-from .init_hook import pre_init_hook

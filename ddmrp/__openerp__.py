@@ -7,7 +7,7 @@
 {
     "name": "DDMRP",
     "summary": "Demand-driven MRP",
-    "version": "8.0.1.0.0",
+    "version": "8.0.2.0.0",
     "author": "Eficent,"
               "Aleph Objects, Inc.,"
               "Odoo Community Association (OCA)",
@@ -20,7 +20,8 @@
                 "stock_available_unreserved",
                 "stock_orderpoint_uom",
                 "stock_orderpoint_manual_procurement",
-                "stock_demand_estimate"],
+                "stock_demand_estimate",
+                "product_stock_location"],
     "data": ["data/product_adu_calculation_method_data.xml",
              "data/stock_buffer_profile_data.xml",
              "security/ir.model.access.csv",

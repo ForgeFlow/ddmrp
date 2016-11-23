@@ -134,8 +134,10 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.net_flow_position_percent)
 
     @api.multi
-    @api.depends("product_location_qty",
-                 "top_of_yellow", "top_of_red")
+    @api.depends("top_of_yellow", "top_of_red",
+                 'product_stock_location_ids',
+                 'product_stock_location_ids.'
+                 'product_location_qty_available_not_res')
     def _compute_execution_priority(self):
         for rec in self:
             if rec.product_location_qty_available_not_res >= rec.top_of_red:
@@ -173,15 +175,16 @@ class StockWarehouseOrderpoint(models.Model):
                 ('date', '<=', date_to)]
 
     @api.multi
-    @api.depends("outgoing_location_qty", "product_id", "location_id")
+    @api.depends("outgoing_location_qty", "product_id", "location_id",
+                 "red_zone_qty", "outgoing_move_ids")
     def _compute_qualified_demand(self):
         for rec in self:
             rec.qualified_demand = 0.0
             domain = rec._search_stock_moves_qualified_demand_domain()
             moves = self.env['stock.move'].search(domain)
             demand_by_days = {}
-            move_dates = [fields.Datetime.from_string(dt).date()
-                              for dt in moves.mapped('date')]
+            move_dates = [fields.Datetime.from_string(dt).date() for dt in
+                          moves.mapped('date')]
             for move_date in move_dates:
                 demand_by_days[move_date] = 0.0
             for move in moves:
@@ -312,31 +315,31 @@ class StockWarehouseOrderpoint(models.Model):
     order_spike_horizon = fields. Float(string="Order Spike Horizon")
     order_spike_threshold = fields.Float(
         string="Order Spike Threshold",
-        compute="_compute_order_spike_threshold", digits=UNIT)
+        compute="_compute_order_spike_threshold", digits=UNIT, store=True)
     qualified_demand = fields.Float(string="Qualified demand",
                                     compute="_compute_qualified_demand",
-                                    digits=UNIT)
+                                    digits=UNIT, store=True)
     net_flow_position = fields.Float(
         string="Net flow position",
         compute="_compute_net_flow_position",
-        digits=UNIT)
+        digits=UNIT, store=True)
     net_flow_position_percent = fields.Float(
         string="Net flow position (% of TOG)",
         compute="_compute_net_flow_position")
     planning_priority_level = fields.Selection(
         string="Planning Priority Level",
         selection=_PRIORITY_LEVEL,
-        compute="_compute_planning_priority")
+        compute="_compute_planning_priority", store=True)
     planning_priority = fields.Char(
         string="Planning priority",
-        compute="_compute_planning_priority")
+        compute="_compute_planning_priority", store=True)
     execution_priority_level = fields.Selection(
         string="On-Hand Alert Level",
         selection=_PRIORITY_LEVEL,
-        compute="_compute_execution_priority")
+        compute="_compute_execution_priority", store=True)
     execution_priority = fields.Char(
         string="On-Hand Alert",
-        compute="_compute_execution_priority")
+        compute="_compute_execution_priority", store=True)
 
     # We override the calculation method for the procure recommended qty
     procure_recommended_qty = fields.Float(
@@ -350,7 +353,7 @@ class StockWarehouseOrderpoint(models.Model):
         digits=UNIT)
     product_location_qty_available_not_res = fields.Float(
         string='Quantity On Location (Unreserved)', digits=UNIT,
-        compute='_compute_product_available_qty')
+        compute='_compute_product_available_qty', store=True)
 
     # Fields used to compute other stored fields
     incoming_move_ids = fields.One2many(comodel_name='stock.move',
@@ -426,14 +429,15 @@ class StockWarehouseOrderpoint(models.Model):
         return super(StockWarehouseOrderpoint, self).name_get()
 
     @api.multi
+    @api.depends('product_stock_location_ids',
+                 'product_stock_location_ids.'
+                 'product_location_qty_available_not_res')
     def _compute_product_available_qty(self):
         super(StockWarehouseOrderpoint, self)._compute_product_available_qty()
         for rec in self:
-            product_available = rec.product_id.with_context(
-                location=rec.location_id.id
-            )._product_available()[rec.product_id.id]
-            rec.product_location_qty_available_not_res = product_available[
-                'qty_available_not_res']
+            for psl in rec.product_stock_location_ids:
+                rec.product_location_qty_available_not_res = \
+                    psl.product_location_qty_available_not_res
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None, count=False):
