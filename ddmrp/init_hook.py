@@ -5,6 +5,8 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
 from openerp.addons.ddmrp.init_methods import init_methods
+import logging
+logger = logging.getLogger(__name__)
 
 
 def pre_init_hook(cr):
@@ -18,4 +20,4 @@ def pre_init_hook(cr):
     """
     init_methods.store_field_orderpoint_id(cr)
     init_methods.store_field_orderpoint_dest_id(cr)
-
+    init_methods.update_product_stock_location(cr)
