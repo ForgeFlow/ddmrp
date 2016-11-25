@@ -96,7 +96,7 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
-        self.orderpointModel.calc_adu()
+        self.orderpointModel.cron_calc_adu()
         to_assert_value = 4
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -115,7 +115,7 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
-        self.orderpointModel.calc_adu()
+        self.orderpointModel.cron_calc_adu()
         self.assertEqual(orderpointA.adu, 0)
 
         pickingOuts = self.pickingModel
@@ -128,7 +128,7 @@ class TestDdmrp(common.TransactionCase):
             picking.action_assign()
             picking.action_done()
 
-        self.orderpointModel.calc_adu()
+        self.orderpointModel.cron_calc_adu()
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -160,7 +160,7 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-        self.orderpointModel.calc_adu()
+        self.orderpointModel.cron_calc_adu()
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -199,6 +199,6 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-        self.orderpointModel.calc_adu()
+        self.orderpointModel.cron_calc_adu()
         to_assert_value = 120 / 120
         self.assertEqual(orderpointA.adu, to_assert_value)

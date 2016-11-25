@@ -9,6 +9,9 @@ from datetime import timedelta
 from openerp.addons import decimal_precision as dp
 from openerp.tools import float_compare, float_round
 import operator as py_operator
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 OPERATORS = {
@@ -483,7 +486,7 @@ class StockWarehouseOrderpoint(models.Model):
                                precision_rounding=self.product_uom.rounding)
 
     @api.model
-    def calc_adu(self):
+    def cron_calc_adu(self):
         """calculate Average Daily Usage for each orderpoint
         Called by cronjob.
         """
@@ -494,3 +497,4 @@ class StockWarehouseOrderpoint(models.Model):
                 orderpoint.adu = orderpoint._compute_adu_past_demand()
             elif orderpoint.adu_calculation_method.method == 'future':
                 orderpoint.adu = orderpoint._compute_adu_future_demand()
+        return True
