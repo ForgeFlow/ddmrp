@@ -64,7 +64,6 @@ class TestDdmrp(common.TransactionCase):
              'product_id': self.productA.id,
              'qty': 200.0})
 
-
     def create_pickingoutA(self, date_move, qty):
         return self.pickingModel.create({
             'picking_type_id': self.ref('stock.picking_type_out'),
@@ -97,6 +96,7 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
+        self.orderpointModel.calc_adu()
         to_assert_value = 4
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -115,6 +115,7 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
+        self.orderpointModel.calc_adu()
         self.assertEqual(orderpointA.adu, 0)
 
         pickingOuts = self.pickingModel
@@ -127,6 +128,7 @@ class TestDdmrp(common.TransactionCase):
             picking.action_assign()
             picking.action_done()
 
+        self.orderpointModel.calc_adu()
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -158,7 +160,7 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-
+        self.orderpointModel.calc_adu()
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -178,7 +180,7 @@ class TestDdmrp(common.TransactionCase):
         estimate_period_next_120 = self.createEstimatePeriod(
             'test_next_120', date_from, date_to)
 
-        estimate = self.estimateModel.create({
+        self.estimateModel.create({
             'period_id': estimate_period_next_120.id,
             'product_id': self.productA.id,
             'product_uom_qty': 120,
@@ -197,6 +199,6 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-
+        self.orderpointModel.calc_adu()
         to_assert_value = 120 / 120
         self.assertEqual(orderpointA.adu, to_assert_value)

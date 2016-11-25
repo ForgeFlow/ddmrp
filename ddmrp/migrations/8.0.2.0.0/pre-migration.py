@@ -16,4 +16,3 @@ def migrate(cr, version):
         return
     init_methods.store_field_orderpoint_id(cr)
     init_methods.store_field_orderpoint_dest_id(cr)
-    init_methods.update_product_stock_location(cr)

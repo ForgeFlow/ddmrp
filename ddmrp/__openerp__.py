@@ -21,7 +21,8 @@
                 "stock_orderpoint_uom",
                 "stock_orderpoint_manual_procurement",
                 "stock_demand_estimate",
-                "product_stock_location"],
+                "product_stock_location",
+                "product_stock_location_available_unreserved"],
     "data": ["data/product_adu_calculation_method_data.xml",
              "data/stock_buffer_profile_data.xml",
              "security/ir.model.access.csv",
@@ -31,9 +32,8 @@
              "views/stock_warehouse_orderpoint_view.xml",
              "views/procurement_order_view.xml",
              "views/mrp_production_view.xml",
-             "views/stock_move_view.xml"
+             "data/ir_cron.xml"
              ],
-    'pre_init_hook': 'pre_init_hook',
     "license": "AGPL-3",
     'installable': True,
     'application': True,

@@ -5,7 +5,6 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
 from openerp import api, fields, models, _
-from openerp.exceptions import Warning as UserError
 from datetime import timedelta
 from openerp.addons import decimal_precision as dp
 from openerp.tools import float_compare, float_round
@@ -35,33 +34,6 @@ _PRIORITY_LEVEL = [
 class StockWarehouseOrderpoint(models.Model):
     _inherit = 'stock.warehouse.orderpoint'
     _description = "Stock Buffer"
-
-    @api.depends("incoming_move_ids.product_id",
-                 "incoming_move_ids.location_dest_id",
-                 "incoming_move_ids.product_uom_qty",
-                 "incoming_move_ids.orderpoint_id",
-                 "incoming_move_ids.state",
-                 "incoming_move_ids",
-                 "outgoing_move_ids.product_id",
-                 "outgoing_move_ids.location_id",
-                 "outgoing_move_ids.product_uom_qty",
-                 "outgoing_move_ids.state",
-                 "outgoing_move_ids",
-                 "adu_fixed",
-                 "demand_estimate_ids.product_id",
-                 "demand_estimate_ids.location_id",
-                 "demand_estimate_ids.product_uom_qty",
-                 "demand_estimate_ids",
-                 "adu_calculation_method")
-    @api.multi
-    def _compute_adu(self):
-        for rec in self:
-            if rec.adu_calculation_method.method == 'fixed':
-                rec.adu = rec.adu_fixed
-            elif rec.adu_calculation_method.method == 'past':
-                rec.adu = rec._compute_adu_past_demand()
-            elif rec.adu_calculation_method.method == 'future':
-                rec.adu = rec._compute_adu_future_demand()
 
     @api.multi
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
@@ -176,7 +148,7 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("outgoing_location_qty", "product_id", "location_id",
-                 "red_zone_qty", "outgoing_move_ids")
+                 "red_zone_qty")
     def _compute_qualified_demand(self):
         for rec in self:
             rec.qualified_demand = 0.0
@@ -267,8 +239,6 @@ class StockWarehouseOrderpoint(models.Model):
         string="Buffer Profile")
     dlt = fields.Float(string="Decoupled Lead Time (days)")
     adu = fields.Float(string="Average Daily Usage (ADU)",
-                       compute="_compute_adu",
-                       store=True,
                        default=0.0, digits=UNIT)
     adu_calculation_method = fields.Many2one(
         comodel_name="product.adu.calculation.method",
@@ -355,16 +325,6 @@ class StockWarehouseOrderpoint(models.Model):
         string='Quantity On Location (Unreserved)', digits=UNIT,
         compute='_compute_product_available_qty', store=True)
 
-    # Fields used to compute other stored fields
-    incoming_move_ids = fields.One2many(comodel_name='stock.move',
-                                        inverse_name='orderpoint_dest_id',
-                                        string="Incoming moves")
-    outgoing_move_ids = fields.One2many('stock.move', 'orderpoint_id',
-                                        string="Outgoing moves")
-    demand_estimate_ids = fields.One2many(
-        comodel_name='stock.demand.estimate', inverse_name='orderpoint_id',
-        string='Demand estimates')
-
     @api.multi
     @api.onchange("red_zone_qty")
     def onchange_red_zone_qty(self):
@@ -438,42 +398,6 @@ class StockWarehouseOrderpoint(models.Model):
             for psl in rec.product_stock_location_ids:
                 rec.product_location_qty_available_not_res = \
                     psl.product_location_qty_available_not_res
-
-    @api.model
-    def search(self, args, offset=0, limit=None, order=None, count=False):
-        args1 = []
-        args2 = []
-        contains_or = False
-        for arg in args:
-            if arg[0] == '|':
-                contains_or = True
-            if arg[0] in ['planning_priority_level',
-                          'execution_priority_level']:
-                if contains_or:
-                    raise UserError(_('Searches including priority levels '
-                                      'and OR operands is not supported.'))
-                args1.append(arg)
-            else:
-                args2.append(arg)
-
-        if args1:
-            recs = super(StockWarehouseOrderpoint, self).search(
-                args2, offset, False, order, count=count)
-            recs2 = self.env['stock.warehouse.orderpoint']
-            for rec in recs:
-                fail = False
-                for arg in args1:
-                    operator = arg[1]
-                    if operator == '=':
-                        operator = '=='
-                    if not OPERATORS[operator](rec[arg[0]], arg[2]):
-                        fail = True
-                if not fail:
-                    recs2 += rec
-            return recs2
-        else:
-            return super(StockWarehouseOrderpoint, self).search(
-                args2, offset, limit, order, count=count)
 
     @api.model
     def _past_demand_estimate_domain(self, date_from, date_to, locations):
@@ -566,30 +490,14 @@ class StockWarehouseOrderpoint(models.Model):
                                precision_rounding=self.product_uom.rounding)
 
     @api.model
-    def create(self, vals):
-        orderpoint = super(StockWarehouseOrderpoint, self).create(vals)
-
-        # Assign this ordepoint to all moves for the product and child
-        # locations
-        locations = self.env['stock.location'].search(
-            [('id', 'child_of', orderpoint.location_id.id)])
-        out_moves = self.env['stock.move'].search(
-            [('product_id', '=', orderpoint.product_id.id),
-             ('location_id', 'in', locations.ids)])
-        for out_move in out_moves:
-            out_move.orderpoint_id = orderpoint
-        in_moves = self.env['stock.move'].search(
-            [('product_id', '=', orderpoint.product_id.id),
-             ('location_dest_id', 'in', locations.ids)])
-        for in_move in in_moves:
-            in_move.orderpoint_dest_id = orderpoint
-
-        # Assign this orderpoint to demand estimates for the product and
-        # child locations
-        estimates = self.env['stock.demand.estimate'].search(
-            [('product_id', '=', orderpoint.product_id.id),
-             ('location_id', 'in', locations.ids)])
-        for estimate in estimates:
-            estimate.orderpoint_id = orderpoint
-
-        return orderpoint
+    def calc_adu(self):
+        """calculate Average Daily Usage for each orderpoint
+        Called by cronjob.
+        """
+        for orderpoint in self.env['stock.warehouse.orderpoint'].search([]):
+            if orderpoint.adu_calculation_method.method == 'fixed':
+                orderpoint.adu = orderpoint.adu_fixed
+            elif orderpoint.adu_calculation_method.method == 'past':
+                orderpoint.adu = orderpoint._compute_adu_past_demand()
+            elif orderpoint.adu_calculation_method.method == 'future':
+                orderpoint.adu = orderpoint._compute_adu_future_demand()
