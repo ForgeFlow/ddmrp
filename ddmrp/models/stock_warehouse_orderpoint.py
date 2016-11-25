@@ -321,9 +321,6 @@ class StockWarehouseOrderpoint(models.Model):
         string='Procured pending approval',
         compute="_compute_procured_pending_approval_qty",
         digits=UNIT)
-    product_location_qty_available_not_res = fields.Float(
-        string='Quantity On Location (Unreserved)', digits=UNIT,
-        compute='_compute_product_available_qty', store=True)
 
     @api.multi
     @api.onchange("red_zone_qty")
@@ -387,17 +384,6 @@ class StockWarehouseOrderpoint(models.Model):
                 res.append((orderpoint.id, name))
             return res
         return super(StockWarehouseOrderpoint, self).name_get()
-
-    @api.multi
-    @api.depends('product_stock_location_ids',
-                 'product_stock_location_ids.'
-                 'product_location_qty_available_not_res')
-    def _compute_product_available_qty(self):
-        super(StockWarehouseOrderpoint, self)._compute_product_available_qty()
-        for rec in self:
-            for psl in rec.product_stock_location_ids:
-                rec.product_location_qty_available_not_res = \
-                    psl.product_location_qty_available_not_res
 
     @api.model
     def _past_demand_estimate_domain(self, date_from, date_to, locations):
