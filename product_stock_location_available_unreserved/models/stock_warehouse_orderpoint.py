@@ -13,11 +13,12 @@ class StockWarehouseOrderpoint(models.Model):
                  'product_stock_location_ids.'
                  'product_location_qty_available_not_res'
                  )
-    def _compute_product_available_qty(self):
+    def _compute_product_location_qty_available_not_res(self):
         for rec in self:
             for psl in rec.product_stock_location_ids:
                 rec.product_location_qty_available_not_res = \
                     psl.product_location_qty_available_not_res
 
     product_location_qty_available_not_res = fields.Float(
-        compute='_compute_product_available_qty', store='True')
+        compute='_compute_product_location_qty_available_not_res',
+        store='True')
