@@ -291,7 +291,7 @@ class StockWarehouseOrderpoint(models.Model):
         compute="_compute_order_spike_threshold", digits=UNIT, store=True)
     qualified_demand = fields.Float(string="Qualified demand",
                                     compute="_compute_qualified_demand",
-                                    digits=UNIT, store=True)
+                                    digits=UNIT)
     net_flow_position = fields.Float(
         string="Net flow position",
         compute="_compute_net_flow_position",
