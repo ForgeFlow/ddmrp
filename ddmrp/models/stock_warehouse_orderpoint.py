@@ -264,7 +264,7 @@ class StockWarehouseOrderpoint(models.Model):
                                 compute="_compute_red_zone",
                                 digits=UNIT, store=True)
     top_of_red = fields.Float(string="Top of Red",
-                              related="red_zone_qty")
+                              related="red_zone_qty", store=True)
     green_zone_qty = fields.Float(string="Green Zone Qty",
                                   compute="_compute_green_zone",
                                   digits=UNIT, store=True)
