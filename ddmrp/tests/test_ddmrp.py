@@ -37,6 +37,7 @@ class TestDdmrp(common.TransactionCase):
         self.main_company = self.env.ref('base.main_company')
         self.warehouse = self.env.ref('stock.warehouse0')
         self.stock_location = self.env.ref('stock.stock_location_stock')
+        self.location_shelf1 = self.env.ref('stock.stock_location_components')
         self.supplier_location = self.env.ref('stock.stock_location_suppliers')
         self.customer_location = self.env.ref('stock.stock_location_customers')
         self.uom_unit = self.env.ref('product.product_uom_unit')
@@ -54,7 +55,7 @@ class TestDdmrp(common.TransactionCase):
         self.binA = self.locationModel.create({
             'usage': 'internal',
             'name': 'Bin A',
-            'location_id': self.stock_location.id,
+            'location_id': self.location_shelf1.id,
             'company_id': self.main_company.id
         })
 
@@ -67,7 +68,7 @@ class TestDdmrp(common.TransactionCase):
     def create_pickingoutA(self, date_move, qty):
         return self.pickingModel.create({
             'picking_type_id': self.ref('stock.picking_type_out'),
-            'location_id': self.stock_location.id,
+            'location_id': self.binA.id,
             'location_dest_id': self.customer_location.id,
             'move_lines': [
                 (0, 0, {
@@ -77,7 +78,7 @@ class TestDdmrp(common.TransactionCase):
                     'date': date_move,
                     'product_uom': self.productA.uom_id.id,
                     'product_uom_qty': qty,
-                    'location_id': self.stock_location.id,
+                    'location_id': self.binA.id,
                     'location_dest_id': self.customer_location.id,
                 })]
         })
@@ -202,3 +203,108 @@ class TestDdmrp(common.TransactionCase):
         self.orderpointModel.cron_calc_adu()
         to_assert_value = 120 / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
+
+    def test_qualified_demand_1(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4,
+            'adu': 4,
+            'order_spike_horizon': 40
+        })
+
+        # Moves within order spike horizon, outside the threshold but past
+        # or today's demand.
+        date_move = datetime.today()
+        expected_result = orderpointA.order_spike_threshold * 2
+        pickingOut1 = self.create_pickingoutA(
+            date_move, expected_result)
+        pickingOut1.action_confirm()
+        self.orderpointModel.cron_calc_adu()
+        self.assertEqual(orderpointA.qualified_demand, expected_result)
+
+    def test_qualified_demand_2(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4,
+            'adu': 4,
+            'order_spike_horizon': 40
+        })
+
+        # Moves within order spike horizon, below threshold. Should have no
+        # effect on the qualified demand.
+        date_move = datetime.today() + timedelta(days=10)
+        self.create_pickingoutA(
+            date_move, orderpointA.order_spike_threshold - 1)
+        self.orderpointModel.cron_calc_adu()
+
+        self.assertEqual(orderpointA.qualified_demand, 0)
+
+    def test_qualified_demand_3(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4,
+            'adu': 4,
+            'order_spike_horizon': 40
+        })
+
+        # Moves within order spike horizon, above threshold. Should have an
+        # effect on the qualified demand
+        date_move = datetime.today() + timedelta(days=10)
+        self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
+                                * 2)
+        self.orderpointModel.cron_calc_adu()
+        expected_result = orderpointA.order_spike_threshold * 2
+        self.assertEqual(orderpointA.qualified_demand, expected_result)
+
+    def test_qualified_demand_4(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4,
+            'adu': 4,
+            'order_spike_horizon': 40
+        })
+
+        # Moves outside of order spike horizon, above threshold. Should have
+        # no effect on the qualified demand
+        date_move = datetime.today() + timedelta(days=100)
+        self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
+                                * 2)
+        self.orderpointModel.cron_calc_adu()
+        expected_result = 0.0
+        self.assertEqual(orderpointA.qualified_demand, expected_result)

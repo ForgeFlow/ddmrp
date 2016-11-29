@@ -151,7 +151,10 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("outgoing_location_qty", "product_id", "location_id",
-                 "red_zone_qty")
+                 "red_zone_qty", 'product_stock_location_ids',
+                 'product_stock_location_ids.incoming_move_ids',
+                 'product_stock_location_ids.child_ids',
+                 'product_stock_location_ids.child_ids.incoming_move_ids')
     def _compute_qualified_demand(self):
         for rec in self:
             rec.qualified_demand = 0.0
@@ -291,7 +294,7 @@ class StockWarehouseOrderpoint(models.Model):
         compute="_compute_order_spike_threshold", digits=UNIT, store=True)
     qualified_demand = fields.Float(string="Qualified demand",
                                     compute="_compute_qualified_demand",
-                                    digits=UNIT)
+                                    digits=UNIT, store=True)
     net_flow_position = fields.Float(
         string="Net flow position",
         compute="_compute_net_flow_position",
