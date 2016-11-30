@@ -95,7 +95,9 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("net_flow_position", "net_flow_position_percent",
-                 "top_of_yellow", "top_of_red")
+                 "top_of_yellow", "top_of_red",
+                 "product_location_qty", "incoming_location_qty",
+                 "top_of_green", "qualified_demand")
     def _compute_planning_priority(self):
         for rec in self:
             if rec.net_flow_position >= rec.top_of_yellow:
@@ -188,7 +190,8 @@ class StockWarehouseOrderpoint(models.Model):
             rec.net_flow_position_percent = usage
 
     @api.multi
-    @api.depends("qualified_demand", "top_of_green")
+    @api.depends("qualified_demand", "top_of_green", "product_location_qty",
+                 "incoming_location_qty", "top_of_green", "qualified_demand")
     def _compute_procure_recommended(self):
         for rec in self:
             rec.procure_recommended_date = \
@@ -301,7 +304,7 @@ class StockWarehouseOrderpoint(models.Model):
         digits=UNIT, store=True)
     net_flow_position_percent = fields.Float(
         string="Net flow position (% of TOG)",
-        compute="_compute_net_flow_position")
+        compute="_compute_net_flow_position", store=True)
     planning_priority_level = fields.Selection(
         string="Planning Priority Level",
         selection=_PRIORITY_LEVEL,
