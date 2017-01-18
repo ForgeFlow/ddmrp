@@ -164,7 +164,8 @@
             <field name="model">stock.warehouse.orderpoint</field>
             <field name="priority">50</field>
             <field name="arch" type="xml">
-                <tree string="Buffer monitor">
+                <tree string="Buffer monitor"
+                      colors="blue:procure_recommended_qty &gt; 0">
                     <field name="product_id"/>
                     <field name="product_uom" string="UoM"/>
                     <field name="warehouse_id"/>
@@ -192,12 +193,11 @@
                     <button string="Create Procurement"
                             name="%(stock_orderpoint_manual_procurement.act_make_procurement_from_orderpoint)d"
 							icon="gtk-execute" type="action"/>
-                    <field name="to_approve_qty"/>
                     <button string="Procurements"
 							name="%(procurement.procurement_action)d"
 							icon="gtk-open" type="action"
                             domain="[('orderpoint_id','=', active_id)]"
-                            context="{'search_default_orderpoint_id': [active_id], 'search_default_to_approve': 1}"/>
+                            context="{'search_default_orderpoint_id': [active_id]}"/>
                     <field name="top_of_red"/>
                     <field name="top_of_yellow"/>
                     <field name="top_of_green"/>

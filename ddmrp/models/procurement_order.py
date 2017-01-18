@@ -10,31 +10,18 @@ from openerp import api, fields, models, _
 class ProcurementOrder(models.Model):
     _inherit = 'procurement.order'
 
+    add_to_net_flow_equation = fields.Boolean(
+        string='Pending add net flow equation', default=True,
+        readonly=True,
+        help="If this flag is set, the procurement is pending to be included "
+             "into the net flow equation.")
+
     @api.multi
-    @api.depends("purchase_id")
-    def _compute_to_approve(self):
-        for rec in self:
-            if rec.state in ['draft', 'exception']:
-                rec.to_approve = True
-            if rec.state not in ['cancel', 'done'] \
-                    and rec.purchase_id \
-                    and rec.purchase_id.state == 'draft':
-                rec.to_approve = True
-
-    def _search_to_approve(self, operator, value):
-        if operator == '=':
-            return ['|', ('state', 'in', ['draft', 'exception']),
-                    ('purchase_id.state', '=', 'draft')]
-        else:
-            raise NotImplementedError(
-                'Search operator %s not implemented for value %s'
-                % (operator, value)
-            )
-
-    to_approve = fields.Boolean(string="To approve",
-                                compute="_compute_to_approve",
-                                search='_search_to_approve',
-                                default=False)
+    def write(self, vals):
+        if 'state' in vals.keys() and vals['state'] not in ['draft', 'cancel']:
+            for rec in self:
+                if rec.state in ['draft', 'cancel']:
+                    rec.add_to_net_flow_equation = True
 
     @api.model
     def _procure_orderpoint_confirm(self, use_new_cursor=False,

@@ -94,23 +94,6 @@ class StockWarehouseOrderpoint(models.Model):
             rec.top_of_yellow = rec.yellow_zone_qty + rec.red_zone_qty
 
     @api.multi
-    @api.depends("net_flow_position", "net_flow_position_percent",
-                 "top_of_yellow", "top_of_red",
-                 "product_location_qty", "incoming_location_qty",
-                 "top_of_green", "qualified_demand")
-    def _compute_planning_priority(self):
-        for rec in self:
-            if rec.net_flow_position >= rec.top_of_yellow:
-                rec.planning_priority_level = 'green'
-            elif rec.net_flow_position >= rec.top_of_red:
-                rec.planning_priority_level = 'yellow'
-            else:
-                rec.planning_priority_level = 'red'
-            rec.planning_priority = '%s (%s %%)' % (
-                rec.planning_priority_level.title(),
-                rec.net_flow_position_percent)
-
-    @api.multi
     @api.depends("top_of_yellow", "top_of_red",
                  'product_stock_location_ids',
                  'product_stock_location_ids.'
@@ -134,64 +117,7 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.execution_priority_level.title(), on_hand_percent)
 
     @api.multi
-    def _search_stock_moves_qualified_demand_domain(self):
-        self.ensure_one()
-        horizon = self.order_spike_horizon
-        if not horizon:
-            date_to = fields.Date.to_string(fields.date.today())
-
-        else:
-            date_to = fields.Date.to_string(fields.date.today() + timedelta(
-                days=horizon))
-        locations = self.env['stock.location'].search(
-            [('id', 'child_of', [self.location_id.id])])
-        return [('product_id', '=', self.product_id.id),
-                ('state', 'in', ['draft', 'waiting', 'confirmed',
-                                 'assigned']),
-                ('location_id', 'in', locations.ids),
-                ('date', '<=', date_to)]
-
-    @api.multi
-    @api.depends("outgoing_location_qty", "product_id", "location_id",
-                 "red_zone_qty", 'product_stock_location_ids',
-                 'product_stock_location_ids.incoming_move_ids',
-                 'product_stock_location_ids.child_ids',
-                 'product_stock_location_ids.child_ids.incoming_move_ids')
-    def _compute_qualified_demand(self):
-        for rec in self:
-            rec.qualified_demand = 0.0
-            domain = rec._search_stock_moves_qualified_demand_domain()
-            moves = self.env['stock.move'].search(domain)
-            demand_by_days = {}
-            move_dates = [fields.Datetime.from_string(dt).date() for dt in
-                          moves.mapped('date')]
-            for move_date in move_dates:
-                demand_by_days[move_date] = 0.0
-            for move in moves:
-                date = fields.Datetime.from_string(move.date).date()
-                demand_by_days[date] += move.product_qty
-            for date in demand_by_days.keys():
-                if demand_by_days[date] >= rec.order_spike_threshold \
-                        or date == fields.date.today():
-                    rec.qualified_demand += demand_by_days[date]
-
-    @api.multi
-    @api.depends("product_location_qty", "incoming_location_qty",
-                 "top_of_green", "qualified_demand")
-    def _compute_net_flow_position(self):
-        for rec in self:
-            rec.net_flow_position = rec.product_location_qty + \
-                                    rec.incoming_location_qty - \
-                                    rec.qualified_demand
-            usage = 0.0
-            if rec.top_of_green:
-                usage = round(rec.net_flow_position /
-                              rec.top_of_green, 2) * 100
-            rec.net_flow_position_percent = usage
-
-    @api.multi
-    @api.depends("qualified_demand", "top_of_green", "product_location_qty",
-                 "incoming_location_qty", "top_of_green", "qualified_demand")
+    @api.depends("net_flow_position", "top_of_green")
     def _compute_procure_recommended(self):
         for rec in self:
             rec.procure_recommended_date = \
@@ -199,10 +125,11 @@ class StockWarehouseOrderpoint(models.Model):
             procure_recommended_qty = 0.0
             if rec.net_flow_position < rec.top_of_green:
                 qty = rec.top_of_green - rec.net_flow_position\
-                      - rec.to_approve_qty
+                      - rec.subtract_procurements(rec)
                 if qty >= 0.0:
                     procure_recommended_qty = qty
-            procure_recommended_qty -= rec.subtract_procurements(rec)
+            else:
+                procure_recommended_qty -= rec.subtract_procurements(rec)
 
             if rec.procure_uom_id:
                 product_qty = rec.procure_uom_id._compute_qty(
@@ -219,29 +146,6 @@ class StockWarehouseOrderpoint(models.Model):
         # TODO: Add various methods to compute the spike threshold
         for rec in self:
             rec.order_spike_threshold = 0.5 * rec.red_zone_qty
-
-    @api.model
-    def _get_to_approve_qty(self, procurement):
-        """Method to obtain the quantity to approve. We assume that by
-        default all stock pickings are approved. We focus on purchase orders"""
-        uom_obj = self.env['product.uom']
-        qty = uom_obj._compute_qty_obj(
-            procurement.product_uom,
-            procurement.product_qty,
-            procurement.product_id.uom_id)
-        return qty
-
-    @api.multi
-    def _compute_procured_pending_approval_qty(self):
-        for rec in self:
-            to_approve_qty = 0.0
-            procurements = self.env['procurement.order'].search(
-                [('location_id', '=', rec.location_id.id),
-                 ('product_id', '=', rec.product_id.id),
-                 ('to_approve', '=', True)])
-            for procurement in procurements:
-                to_approve_qty += self._get_to_approve_qty(procurement)
-            rec.to_approve_qty = to_approve_qty
 
     buffer_profile_id = fields.Many2one(
         comodel_name='stock.buffer.profile',
@@ -295,23 +199,16 @@ class StockWarehouseOrderpoint(models.Model):
     order_spike_threshold = fields.Float(
         string="Order Spike Threshold",
         compute="_compute_order_spike_threshold", digits=UNIT, store=True)
-    qualified_demand = fields.Float(string="Qualified demand",
-                                    compute="_compute_qualified_demand",
-                                    digits=UNIT, store=True)
-    net_flow_position = fields.Float(
-        string="Net flow position",
-        compute="_compute_net_flow_position",
-        digits=UNIT, store=True)
+    qualified_demand = fields.Float(string="Qualified demand", digits=UNIT,
+                                    readonly=True)
+    net_flow_position = fields.Float(string="Net flow position", digits=UNIT,
+                                     readonly=True)
     net_flow_position_percent = fields.Float(
-        string="Net flow position (% of TOG)",
-        compute="_compute_net_flow_position", store=True)
+        string="Net flow position (% of TOG)", readonly=True)
     planning_priority_level = fields.Selection(
-        string="Planning Priority Level",
-        selection=_PRIORITY_LEVEL,
-        compute="_compute_planning_priority", store=True)
-    planning_priority = fields.Char(
-        string="Planning priority",
-        compute="_compute_planning_priority", store=True)
+        string="Planning Priority Level", selection=_PRIORITY_LEVEL,
+        readonly=True)
+    planning_priority = fields.Char(string="Planning priority", readonly=True)
     execution_priority_level = fields.Selection(
         string="On-Hand Alert Level",
         selection=_PRIORITY_LEVEL,
@@ -325,11 +222,6 @@ class StockWarehouseOrderpoint(models.Model):
         compute="_compute_procure_recommended")
     procure_recommended_date = fields.Date(
         compute="_compute_procure_recommended")
-
-    to_approve_qty = fields.Float(
-        string='Procured pending approval',
-        compute="_compute_procured_pending_approval_qty",
-        digits=UNIT)
 
     @api.multi
     @api.onchange("red_zone_qty")
@@ -385,21 +277,19 @@ class StockWarehouseOrderpoint(models.Model):
         records = self.env['stock.move'].search(domain)
         return self._stock_move_tree_view(records)
 
-    @api.multi
-    def name_get(self):
-        """Use the company name and template as name."""
-        if 'name_show_extended' in self.env.context:
-            res = []
-            for orderpoint in self:
-                name = orderpoint.name
-                if orderpoint.product_id.default_code:
-                    name += " [%s]" % orderpoint.product_id.default_code
-                name += " %s" % orderpoint.product_id.name
-                name += " - %s" % orderpoint.warehouse_id.name
-                name += " - %s" % orderpoint.location_id.name
-                res.append((orderpoint.id, name))
-            return res
-        return super(StockWarehouseOrderpoint, self).name_get()
+    @api.model
+    def subtract_procurements(self, orderpoint):
+        qty = super(StockWarehouseOrderpoint, self).subtract_procurements(
+            orderpoint)
+        uom_obj = self.env["product.uom"]
+        for procurement in orderpoint.procurement_ids:
+            if procurement.state not in ('draft', 'cancel') and \
+                    procurement.add_to_net_flow_equation:
+                qty += uom_obj._compute_qty_obj(
+                    procurement.product_uom,
+                    procurement.product_qty,
+                    procurement.product_id.uom_id)
+        return qty
 
     @api.model
     def _past_demand_estimate_domain(self, date_from, date_to, locations):
@@ -491,16 +381,93 @@ class StockWarehouseOrderpoint(models.Model):
             return float_round(qty / horizon,
                                precision_rounding=self.product_uom.rounding)
 
-    @api.model
-    def cron_calc_adu(self):
-        """calculate Average Daily Usage for each orderpoint
-        Called by cronjob.
-        """
-        for orderpoint in self.env['stock.warehouse.orderpoint'].search([]):
+    @api.multi
+    def _calc_adu(self):
+        for orderpoint in self:
             if orderpoint.adu_calculation_method.method == 'fixed':
                 orderpoint.adu = orderpoint.adu_fixed
             elif orderpoint.adu_calculation_method.method == 'past':
                 orderpoint.adu = orderpoint._compute_adu_past_demand()
             elif orderpoint.adu_calculation_method.method == 'future':
                 orderpoint.adu = orderpoint._compute_adu_future_demand()
+        return True
+
+    @api.multi
+    def _search_stock_moves_qualified_demand_domain(self):
+        self.ensure_one()
+        horizon = self.order_spike_horizon
+        if not horizon:
+            date_to = fields.Date.to_string(fields.date.today())
+
+        else:
+            date_to = fields.Date.to_string(fields.date.today() + timedelta(
+                days=horizon))
+        locations = self.env['stock.location'].search(
+            [('id', 'child_of', [self.location_id.id])])
+        return [('product_id', '=', self.product_id.id),
+                ('state', 'in', ['draft', 'waiting', 'confirmed',
+                                 'assigned']),
+                ('location_id', 'in', locations.ids),
+                ('date', '<=', date_to)]
+
+    @api.multi
+    def _calc_qualified_demand(self):
+        for rec in self:
+            rec.qualified_demand = 0.0
+            domain = rec._search_stock_moves_qualified_demand_domain()
+            moves = self.env['stock.move'].search(domain)
+            demand_by_days = {}
+            move_dates = [fields.Datetime.from_string(dt).date() for dt in
+                          moves.mapped('date')]
+            for move_date in move_dates:
+                demand_by_days[move_date] = 0.0
+            for move in moves:
+                date = fields.Datetime.from_string(move.date).date()
+                demand_by_days[date] += move.product_qty
+            for date in demand_by_days.keys():
+                if demand_by_days[date] >= rec.order_spike_threshold \
+                        or date == fields.date.today():
+                    rec.qualified_demand += demand_by_days[date]
+        return True
+
+    @api.multi
+    def _calc_net_flow_position(self):
+        for rec in self:
+            rec.net_flow_position = rec.product_location_qty + \
+                                    rec.incoming_location_qty - \
+                                    rec.qualified_demand
+            usage = 0.0
+            if rec.top_of_green:
+                usage = round(rec.net_flow_position /
+                              rec.top_of_green, 2) * 100
+            rec.net_flow_position_percent = usage
+            for procurement in rec.procurement_ids:
+                if procurement.state not in ('draft', 'cancel'):
+                    procurement.add_to_net_flow_equation = False
+        return True
+
+    @api.multi
+    def _calc_planning_priority(self):
+        for rec in self:
+            if rec.net_flow_position >= rec.top_of_yellow:
+                rec.planning_priority_level = 'green'
+            elif rec.net_flow_position >= rec.top_of_red:
+                rec.planning_priority_level = 'yellow'
+            else:
+                rec.planning_priority_level = 'red'
+            rec.planning_priority = '%s (%s %%)' % (
+                rec.planning_priority_level.title(),
+                rec.net_flow_position_percent)
+
+    @api.model
+    def cron_ddmrp(self):
+        """calculate key DDMRP parameters for each orderpoint
+        Called by cronjob.
+        """
+        orderpoints = self.search([])
+        orderpoints._calc_adu()
+        orderpoints._calc_qualified_demand()
+        orderpoints._calc_net_flow_position()
+        orderpoints._calc_planning_priority()
+
         return True

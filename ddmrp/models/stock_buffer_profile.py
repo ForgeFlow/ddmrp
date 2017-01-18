@@ -17,18 +17,6 @@ _ITEM_TYPES = [
     ('distributed', 'Distributed')
 ]
 
-_LEAD_TIMES = [
-    ('short', 'Short Lead Time'),
-    ('medium', 'Medium'),
-    ('long', 'Long')
-]
-
-_VARIABILITY = [
-    ('low', 'Low'),
-    ('medium', 'Medium'),
-    ('high', 'High'),
-]
-
 
 class StockBufferProfile(models.Model):
     _name = 'stock.buffer.profile'
@@ -41,10 +29,11 @@ class StockBufferProfile(models.Model):
         """Get the right summary for this job."""
         for rec in self:
             rec.name = '%s %s, %s(%s), %s(%s)' % (rec.replenish_method,
-                                                  rec.item_type, rec.lead_time,
-                                                  rec.lead_time_factor,
-                                                  rec.variability,
-                                                  rec.variability_factor)
+                                                  rec.item_type,
+                                                  rec.lead_time_id.name,
+                                                  rec.lead_time_id.factor,
+                                                  rec.variability_id.name,
+                                                  rec.variability_id.factor)
 
     name = fields.Char(string="Name", compute="_compute_name", store=True)
     replenish_method = fields.Selection(string="Replenishment method",
@@ -52,13 +41,12 @@ class StockBufferProfile(models.Model):
                                         required=True)
     item_type = fields.Selection(string="Item Type", selection=_ITEM_TYPES,
                                  required=True)
-    lead_time = fields.Selection(string="Lead Time", selection=_LEAD_TIMES,
-                                 required=True)
-    lead_time_factor = fields.Float(string="Lead Time Factor")
-    variability = fields.Selection(string="Variability",
-                                   selection=_VARIABILITY,
-                                   required=True)
-    variability_factor = fields.Float(string="Variability Factor")
+    lead_time_id = fields.One2many(
+        comodel_name='stock.buffer.profile.lead.time',
+        string='Lead Time Factor')
+    variability_id = fields.One2many(
+        comodel_name='stock.buffer.profile.variability',
+        string='Variability Factor')
     company_id = fields.Many2one(
         'res.company', 'Company', required=True,
         default=lambda self: self.env['res.company']._company_default_get(

@@ -97,7 +97,8 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         to_assert_value = 4
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -116,7 +117,8 @@ class TestDdmrp(common.TransactionCase):
             'adu_calculation_method': method.id,
             'adu_fixed': 4
         })
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         self.assertEqual(orderpointA.adu, 0)
 
         pickingOuts = self.pickingModel
@@ -129,7 +131,8 @@ class TestDdmrp(common.TransactionCase):
             picking.action_assign()
             picking.action_done()
 
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -161,7 +164,8 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         to_assert_value = (60 + 60) / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
@@ -200,11 +204,14 @@ class TestDdmrp(common.TransactionCase):
             'dlt': 10,
             'adu_calculation_method': method.id
         })
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         to_assert_value = 120 / 120
         self.assertEqual(orderpointA.adu, to_assert_value)
 
     def test_qualified_demand_1(self):
+        """Moves within order spike horizon, outside the threshold but past
+        or today's demand."""
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
         orderpointA = self.orderpointModel.create({
             'buffer_profile_id': self.buffer_profile_pur.id,
@@ -221,17 +228,17 @@ class TestDdmrp(common.TransactionCase):
             'order_spike_horizon': 40
         })
 
-        # Moves within order spike horizon, outside the threshold but past
-        # or today's demand.
         date_move = datetime.today()
         expected_result = orderpointA.order_spike_threshold * 2
         pickingOut1 = self.create_pickingoutA(
             date_move, expected_result)
         pickingOut1.action_confirm()
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
         self.assertEqual(orderpointA.qualified_demand, expected_result)
 
     def test_qualified_demand_2(self):
+        """Moves within order spike horizon, below threshold. Should have no
+        effect on the qualified demand."""
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
         orderpointA = self.orderpointModel.create({
             'buffer_profile_id': self.buffer_profile_pur.id,
@@ -248,16 +255,16 @@ class TestDdmrp(common.TransactionCase):
             'order_spike_horizon': 40
         })
 
-        # Moves within order spike horizon, below threshold. Should have no
-        # effect on the qualified demand.
         date_move = datetime.today() + timedelta(days=10)
         self.create_pickingoutA(
             date_move, orderpointA.order_spike_threshold - 1)
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
 
         self.assertEqual(orderpointA.qualified_demand, 0)
 
     def test_qualified_demand_3(self):
+        """Moves within order spike horizon, above threshold. Should have an
+        effect on the qualified demand"""
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
         orderpointA = self.orderpointModel.create({
             'buffer_profile_id': self.buffer_profile_pur.id,
@@ -274,16 +281,17 @@ class TestDdmrp(common.TransactionCase):
             'order_spike_horizon': 40
         })
 
-        # Moves within order spike horizon, above threshold. Should have an
-        # effect on the qualified demand
         date_move = datetime.today() + timedelta(days=10)
         self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
                                 * 2)
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         expected_result = orderpointA.order_spike_threshold * 2
         self.assertEqual(orderpointA.qualified_demand, expected_result)
 
     def test_qualified_demand_4(self):
+        """ Moves outside of order spike horizon, above threshold. Should
+        have no effect on the qualified demand"""
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
         orderpointA = self.orderpointModel.create({
             'buffer_profile_id': self.buffer_profile_pur.id,
@@ -300,11 +308,11 @@ class TestDdmrp(common.TransactionCase):
             'order_spike_horizon': 40
         })
 
-        # Moves outside of order spike horizon, above threshold. Should have
-        # no effect on the qualified demand
+
         date_move = datetime.today() + timedelta(days=100)
         self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
                                 * 2)
-        self.orderpointModel.cron_calc_adu()
+        self.orderpointModel.cron_ddmrp()
+
         expected_result = 0.0
         self.assertEqual(orderpointA.qualified_demand, expected_result)
