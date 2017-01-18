@@ -131,6 +131,12 @@ class StockWarehouseOrderpoint(models.Model):
             else:
                 procure_recommended_qty -= rec.subtract_procurements(rec)
 
+            reste = rec.qty_multiple > 0 and \
+                procure_recommended_qty % rec.qty_multiple or 0.0
+            if float_compare(reste, 0.0,
+                             precision_rounding=rec.product_uom.rounding) > 0:
+                procure_recommended_qty += rec.qty_multiple - reste
+
             if rec.procure_uom_id:
                 product_qty = rec.procure_uom_id._compute_qty(
                     rec.product_id.uom_id.id, procure_recommended_qty,
