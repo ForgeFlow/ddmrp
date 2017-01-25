@@ -29,19 +29,20 @@ def migrate_variability(cr):
             'factor': variability_factor
         })
 
+
 def migrate_lead_time(cr):
     pool = pooler.get_pool(cr.dbname)
     lead_time_obj = pool['stock.buffer.profile.lead.time']
     cr.execute("""
         SELECT old_lead_time, old_lead_time_factor
         FROM stock_buffer_profile
-        WHERE old_variability IS NOT NULL
-        AND old_variability_factor IS NOT NULL
-        GROUP by old_variability, old_variability_factor""")
-    for variability, variability_factor in cr.fetchall():
-        variability_obj.create({
-            'name': variability,
-            'factor': variability_factor
+        WHERE old_lead_time IS NOT NULL
+        AND old_lead_time_factor IS NOT NULL
+        GROUP by old_lead_time, old_lead_time_factor""")
+    for lead_time, lead_time_factor in cr.fetchall():
+        lead_time_obj.create({
+            'name': lead_time,
+            'factor': lead_time_factor
         })
 
 
