@@ -15,9 +15,13 @@ class MrpProduction(models.Model):
     def _search_procurements(self):
         return [('production_id', '=', self.id)]
 
+    @api.model
+    def _search_orderpoints(self):
+        return [('name', '=', self.move_prod_id.origin)]
+
     @api.multi
-    @api.depends("location_dest_id", "product_id")
-    def _compute_reordering_rule(self):
+    @api.depends('move_prod_id')
+    def _compute_orderpoint_id(self):
         for rec in self:
             domain = rec._search_procurements()
             procurements = rec.env['procurement.order'].search(domain)
@@ -25,6 +29,12 @@ class MrpProduction(models.Model):
                            procurements if procurement.orderpoint_id]
             if orderpoints:
                 rec.orderpoint_id = orderpoints[0]
+            else:
+                domain = rec._search_orderpoints()
+                orderpoints = rec.env['stock.warehouse.orderpoint'].search(
+                    domain)
+                if orderpoints:
+                    rec.orderpoint_id = orderpoints[0]
 
     @api.multi
     @api.depends("orderpoint_id")
@@ -61,7 +71,7 @@ class MrpProduction(models.Model):
 
     orderpoint_id = fields.Many2one(
         comodel_name='stock.warehouse.orderpoint',
-        string="Reordering rule", compute='_compute_reordering_rule')
+        string="Reordering rule", compute='_compute_orderpoint_id')
     execution_priority_level = fields.Selection(
         string="Buffer On-Hand Alert Level",
         selection=_PRIORITY_LEVEL,
