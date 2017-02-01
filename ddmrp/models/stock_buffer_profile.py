@@ -23,8 +23,9 @@ class StockBufferProfile(models.Model):
     _string = 'Buffer Profile'
 
     @api.multi
-    @api.depends("item_type", "lead_time_id", "lead_time_id.factor",
-                 "variability_id", "variability_id.factor")
+    @api.depends("item_type", "lead_time_id", "lead_time_id.name",
+                 "lead_time_id.factor", "variability_id", "variability_id.name",
+                 "variability_id.factor")
     def _compute_name(self):
         """Get the right summary for this job."""
         for rec in self:
@@ -41,10 +42,10 @@ class StockBufferProfile(models.Model):
                                         required=True)
     item_type = fields.Selection(string="Item Type", selection=_ITEM_TYPES,
                                  required=True)
-    lead_time_id = fields.One2many(
+    lead_time_id = fields.Many2one(
         comodel_name='stock.buffer.profile.lead.time',
         string='Lead Time Factor')
-    variability_id = fields.One2many(
+    variability_id = fields.Many2one(
         comodel_name='stock.buffer.profile.variability',
         string='Variability Factor')
     company_id = fields.Many2one(
