@@ -30,9 +30,9 @@ def migrate_variability(cr):
         })
         cr.execute("""
         UPDATE stock_buffer_profile
-        SET lead_time_id = %s
-        WHERE old_lead_time_factor = %s
-        AND old_lead_time = %s""" % (var_id, variability_factor, variability))
+        SET variability_id = %s
+        WHERE old_variability_factor = %s
+        AND old_variability = %s""" % (var_id, variability_factor, variability))
 
 
 def migrate_lead_time(cr):
