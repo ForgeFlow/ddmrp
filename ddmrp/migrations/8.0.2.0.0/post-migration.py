@@ -32,7 +32,7 @@ def migrate_variability(cr):
         UPDATE stock_buffer_profile
         SET variability_id = %s
         WHERE old_variability_factor = %s
-        AND old_variability = %s""" % (var_id, variability_factor, variability))
+        AND old_variability = '%s'""" % (var_id, variability_factor, variability))
 
 
 def migrate_lead_time(cr):
@@ -53,7 +53,7 @@ def migrate_lead_time(cr):
         UPDATE stock_buffer_profile
         SET lead_time_id = %s
         WHERE old_lead_time_factor = %s
-        AND old_lead_time = %s""" % (lt_id, lead_time_factor, lead_time))
+        AND old_lead_time = '%s'""" % (lt_id, lead_time_factor, lead_time))
 
 
 def run_cron_ddmrp(cr):
