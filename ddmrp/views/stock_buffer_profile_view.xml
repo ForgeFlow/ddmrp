@@ -57,10 +57,8 @@
                     <field name="name"/>
                     <separator/>
                     <field name="item_type"/>
-                    <field name="lead_time"/>
-                    <field name="lead_time_factor"/>
-                    <field name="variability"/>
-                    <field name="variability_factor"/>
+                    <field name="lead_time_id"/>
+                    <field name="variability_id"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                 </search>
             </field>

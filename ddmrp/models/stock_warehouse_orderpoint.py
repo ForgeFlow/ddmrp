@@ -39,20 +39,20 @@ class StockWarehouseOrderpoint(models.Model):
     _description = "Stock Buffer"
 
     @api.multi
-    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
-                 "buffer_profile_id.variability_factor")
+    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
+                 "buffer_profile_id.variability_id.factor")
     def _compute_red_zone(self):
         for rec in self:
             rec.red_base_qty = float_round(
-                rec.dlt * rec.adu * rec.buffer_profile_id.lead_time_factor,
+                rec.dlt * rec.adu * rec.buffer_profile_id.lead_time_id.factor,
                 precision_rounding=rec.product_uom.rounding)
             rec.red_safety_qty = float_round(
-                rec.red_base_qty * rec.buffer_profile_id.variability_factor,
+                rec.red_base_qty * rec.buffer_profile_id.variability_id.factor,
                 precision_rounding=rec.product_uom.rounding)
             rec.red_zone_qty = rec.red_base_qty + rec.red_safety_qty
 
     @api.multi
-    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
+    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
                  "red_zone_qty", "order_cycle", "minimum_order_quantity")
     def _compute_green_zone(self):
         for rec in self:
@@ -62,7 +62,7 @@ class StockWarehouseOrderpoint(models.Model):
                 precision_rounding=rec.product_uom.rounding)
             # Using lead time factor
             rec.green_zone_lt_factor = float_round(
-                rec.dlt*rec.adu*rec.buffer_profile_id.lead_time_factor,
+                rec.dlt*rec.adu*rec.buffer_profile_id.lead_time_id.factor,
                 precision_rounding=rec.product_uom.rounding)
             # Using minimum order quantity
             rec.green_zone_moq = float_round(
@@ -79,8 +79,8 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.green_zone_qty + rec.yellow_zone_qty + rec.red_zone_qty
 
     @api.multi
-    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_factor",
-                 "buffer_profile_id.variability_factor",
+    @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
+                 "buffer_profile_id.variability_id.factor",
                  "buffer_profile_id.replenish_method",
                  "red_zone_qty")
     def _compute_yellow_zone(self):
