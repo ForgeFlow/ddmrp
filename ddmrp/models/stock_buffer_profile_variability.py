@@ -8,7 +8,7 @@ from openerp import api, fields, models
 
 
 class StockBufferProfileVariability(models.Model):
-    _name = 'stock.buffer.profile.variabiliy'
+    _name = 'stock.buffer.profile.variability'
     _string = 'Buffer Profile Variability Factor'
 
     factor = fields.Float(string='Variability Factor', required=True)
