@@ -22,7 +22,7 @@ def copy_profile_variability(cr):
             """
             ALTER TABLE stock_buffer_profile
             ADD COLUMN old_variability
-            integer;
+            varchar(30);
             COMMENT ON COLUMN stock_buffer_profile.old_variability
             IS 'Old Variability';
             """)
@@ -64,7 +64,7 @@ def copy_profile_lead_time(cr):
             """
             ALTER TABLE stock_buffer_profile
             ADD COLUMN old_lead_time
-            integer;
+            varchar(30);
             COMMENT ON COLUMN stock_buffer_profile.old_lead_time
             IS 'Old Lead Time';
             """)
