@@ -24,10 +24,15 @@ def migrate_variability(cr):
         AND old_variability_factor IS NOT NULL
         GROUP by old_variability, old_variability_factor""")
     for variability, variability_factor in cr.fetchall():
-        variability_obj.create(cr, SUPERUSER_ID, {
+        var_id = variability_obj.create(cr, SUPERUSER_ID, {
             'name': variability,
             'factor': variability_factor
         })
+        cr.execute("""
+        UPDATE stock_buffer_profile
+        SET lead_time_id = %s
+        WHERE old_lead_time_factor = %s
+        AND old_lead_time = %s""" % (var_id, variability_factor, variability))
 
 
 def migrate_lead_time(cr):
@@ -40,10 +45,19 @@ def migrate_lead_time(cr):
         AND old_lead_time_factor IS NOT NULL
         GROUP by old_lead_time, old_lead_time_factor""")
     for lead_time, lead_time_factor in cr.fetchall():
-        lead_time_obj.create(cr, SUPERUSER_ID, {
+        lt_id = lead_time_obj.create(cr, SUPERUSER_ID, {
             'name': lead_time,
             'factor': lead_time_factor
         })
+        cr.execute("""
+        UPDATE stock_buffer_profile
+        SET lead_time_id = %s
+        WHERE old_lead_time_factor = %s
+        AND old_lead_time = %s""" % (lt_id, lead_time_factor, lead_time))
+
+
+def run_cron_ddmrp(cr):
+    pool['stock.warehouse.orderpoint'].cron_ddmrp()
 
 
 def migrate(cr, version):
@@ -51,3 +65,4 @@ def migrate(cr, version):
         return
     migrate_variability(cr)
     migrate_lead_time(cr)
+    run_cron_ddmrp(cr)
