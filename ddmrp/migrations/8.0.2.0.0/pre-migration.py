@@ -43,7 +43,7 @@ def copy_profile_variability_factor(cr):
             """
             ALTER TABLE stock_buffer_profile
             ADD COLUMN old_variability_factor
-            integer;
+            double precision;
             COMMENT ON COLUMN stock_buffer_profile.old_variability_factor
             IS 'Old Variability Factor';
             """)
@@ -85,7 +85,7 @@ def copy_profile_lead_time_factor(cr):
             """
             ALTER TABLE stock_buffer_profile
             ADD COLUMN old_lead_time_factor
-            integer;
+            double precision;
             COMMENT ON COLUMN stock_buffer_profile.old_lead_time_factor
             IS 'Old Lead Time Factor';
             """)
