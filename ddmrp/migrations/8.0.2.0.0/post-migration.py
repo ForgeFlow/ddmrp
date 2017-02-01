@@ -24,7 +24,7 @@ def migrate_variability(cr):
         AND old_variability_factor IS NOT NULL
         GROUP by old_variability, old_variability_factor""")
     for variability, variability_factor in cr.fetchall():
-        variability_obj.create({
+        variability_obj.create(cr, SUPERUSER_ID, {
             'name': variability,
             'factor': variability_factor
         })
@@ -40,7 +40,7 @@ def migrate_lead_time(cr):
         AND old_lead_time_factor IS NOT NULL
         GROUP by old_lead_time, old_lead_time_factor""")
     for lead_time, lead_time_factor in cr.fetchall():
-        lead_time_obj.create({
+        lead_time_obj.create(cr, SUPERUSER_ID, {
             'name': lead_time,
             'factor': lead_time_factor
         })
