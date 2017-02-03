@@ -308,7 +308,6 @@ class TestDdmrp(common.TransactionCase):
             'order_spike_horizon': 40
         })
 
-
         date_move = datetime.today() + timedelta(days=100)
         self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
                                 * 2)
@@ -316,3 +315,98 @@ class TestDdmrp(common.TransactionCase):
 
         expected_result = 0.0
         self.assertEqual(orderpointA.qualified_demand, expected_result)
+
+    def _check_red_zone(self, orderpoint, red_base_qty=0.0, red_safety_qty=0.0,
+                        red_zone_qty=0.0):
+
+        # red base_qty = dlt * adu * lead time factor
+        self.assertEqual(orderpoint.red_base_qty, red_base_qty)
+
+        # red_safety_qty = red_base_qty * variability factor
+        self.assertEqual(orderpoint.red_safety_qty, red_safety_qty)
+
+        # red_zone_qty = red_base_qty + red_safety_qty
+        self.assertEqual(orderpoint.red_zone_qty, red_zone_qty)
+
+    def _check_yellow_zone(self, orderpoint, yellow_zone_qty=0.0,
+                           top_of_yellow=0.0):
+
+        # yellow_zone_qty = dlt * adu
+        self.assertEqual(orderpoint.yellow_zone_qty, yellow_zone_qty)
+
+        # top_of_yellow = yellow_zone_qty + red_zone_qty
+        self.assertEqual(orderpoint.top_of_yellow, top_of_yellow)
+
+    def _check_green_zone(self, orderpoint, green_zone_oc=0.0,
+                          green_zone_lt_factor=0.0, green_zone_moq=0.0,
+                          green_zone_qty=0.0, top_of_green=0.0):
+
+        # green_zone_oc = order_cycle * adu
+        self.assertEqual(orderpoint.green_zone_oc, green_zone_oc)
+
+        # green_zone_lt_factor = dlt * adu * lead time factor
+        self.assertEqual(orderpoint.green_zone_lt_factor, green_zone_lt_factor)
+
+        # green_zone_moq = minimum_order_quantity
+        self.assertEqual(orderpoint.green_zone_moq, green_zone_moq)
+
+        # green_zone_qty = max(green_zone_oc, green_zone_lt_factor,
+        # green_zone_moq)
+        self.assertEqual(orderpoint.green_zone_qty, green_zone_qty)
+
+        # top_of_green = green_zone_qty + yellow_zone_qty + red_zone_qty
+        self.assertEqual(orderpoint.top_of_green, top_of_green)
+
+    def test_buffer_zones_red(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4
+        })
+        self.orderpointModel.cron_ddmrp()
+
+        self._check_red_zone(orderpointA, red_base_qty=20, red_safety_qty=10,
+                             red_zone_qty=30)
+
+        # Change various parameters
+        orderpointA.dlt = 20
+        orderpointA.buffer_profile_id.lead_time_id.factor = 1
+        orderpointA.buffer_profile_id.variability_id.factor = 1
+
+        self._check_red_zone(orderpointA, red_base_qty=80, red_safety_qty=80,
+                             red_zone_qty=160)
+
+    def test_buffer_zones_all(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4
+        })
+        self.orderpointModel.cron_ddmrp()
+
+        self._check_red_zone(orderpointA, red_base_qty=20.0,
+                             red_safety_qty=10.0,
+                             red_zone_qty=30.0)
+
+        self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
+                                top_of_yellow=70.0)
+
+        self._check_green_zone(orderpointA, green_zone_oc=0.0,
+                               green_zone_lt_factor=20.0, green_zone_moq=0.0,
+                               green_zone_qty=20.0, top_of_green=90.0)

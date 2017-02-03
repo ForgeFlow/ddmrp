@@ -113,8 +113,9 @@ class StockWarehouseOrderpoint(models.Model):
                     rec.top_of_green), 2) * 100
             else:
                 on_hand_percent = 0.0
-            rec.execution_priority = '%s (%s %%)' % (
-                rec.execution_priority_level.title(), on_hand_percent)
+            rec.execution_priority = '%s %% (%s)' % \
+                                     (on_hand_percent,
+                                      rec.execution_priority_level.title())
 
     @api.multi
     @api.depends("net_flow_position", "top_of_green")
@@ -229,6 +230,8 @@ class StockWarehouseOrderpoint(models.Model):
     procure_recommended_date = fields.Date(
         compute="_compute_procure_recommended")
 
+    _order = 'planning_priority asc'
+    
     @api.multi
     @api.onchange("red_zone_qty")
     def onchange_red_zone_qty(self):
@@ -295,7 +298,10 @@ class StockWarehouseOrderpoint(models.Model):
                     procurement.product_uom,
                     procurement.product_qty,
                     procurement.product_id.uom_id)
-        return qty
+        if qty >= 0.0:
+            return qty
+        else:
+            return 0.0
 
     @api.model
     def _past_demand_estimate_domain(self, date_from, date_to, locations):
@@ -461,9 +467,9 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.planning_priority_level = 'yellow'
             else:
                 rec.planning_priority_level = 'red'
-            rec.planning_priority = '%s (%s %%)' % (
-                rec.planning_priority_level.title(),
-                rec.net_flow_position_percent)
+            rec.planning_priority = '%s %% (%s)' % (
+                rec.net_flow_position_percent,
+                rec.planning_priority_level.title())
 
     @api.model
     def cron_ddmrp(self):

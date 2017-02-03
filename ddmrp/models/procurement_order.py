@@ -18,10 +18,14 @@ class ProcurementOrder(models.Model):
 
     @api.multi
     def write(self, vals):
-        if 'state' in vals.keys() and vals['state'] not in ['draft', 'cancel']:
+        res = super(ProcurementOrder, self).write(vals)
+        if 'state' in vals.keys() \
+                and vals['state'] not in ['draft', 'cancel'] \
+                and 'add_to_net_flow_equation' not in vals:
             for rec in self:
                 if rec.state in ['draft', 'cancel']:
                     rec.add_to_net_flow_equation = True
+        return res
 
     @api.model
     def _procure_orderpoint_confirm(self, use_new_cursor=False,
