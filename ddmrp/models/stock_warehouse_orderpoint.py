@@ -4,7 +4,7 @@
 # © 2016 Aleph Objects, Inc. (https://www.alephobjects.com/)
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
-from openerp import api, fields, models, _
+from openerp import api, fields, models
 from datetime import timedelta
 from openerp.addons import decimal_precision as dp
 from openerp.tools import float_compare, float_round
@@ -110,7 +110,7 @@ class StockWarehouseOrderpoint(models.Model):
             if rec.top_of_green:
                 rec.on_hand_percent = round((
                     (rec.product_location_qty_available_not_res /
-                    rec.top_of_green)*100), 2)
+                     rec.top_of_green)*100), 2)
             else:
                 rec.on_hand_percent = 0.0
 
@@ -123,7 +123,7 @@ class StockWarehouseOrderpoint(models.Model):
             procure_recommended_qty = 0.0
             if rec.net_flow_position < rec.top_of_green:
                 qty = rec.top_of_green - rec.net_flow_position\
-                      - rec.subtract_procurements(rec)
+                    - rec.subtract_procurements(rec)
                 if qty >= 0.0:
                     procure_recommended_qty = qty
             else:
@@ -226,7 +226,7 @@ class StockWarehouseOrderpoint(models.Model):
         compute="_compute_procure_recommended")
 
     _order = 'planning_priority_level asc, net_flow_position asc'
-    
+
     @api.multi
     @api.onchange("red_zone_qty")
     def onchange_red_zone_qty(self):
@@ -275,8 +275,8 @@ class StockWarehouseOrderpoint(models.Model):
     @api.multi
     def open_moves(self):
         self.ensure_one()
-        """ Utility method used to add an "Open Moves" button in the buffer
-        planning view"""
+        # Utility method used to add an "Open Moves" button in the buffer
+        # planning view
         domain = self._search_open_stock_moves_domain()
         records = self.env['stock.move'].search(domain)
         return self._stock_move_tree_view(records)
@@ -441,8 +441,7 @@ class StockWarehouseOrderpoint(models.Model):
     def _calc_net_flow_position(self):
         for rec in self:
             rec.net_flow_position = rec.product_location_qty + \
-                                    rec.incoming_location_qty - \
-                                    rec.qualified_demand
+                rec.incoming_location_qty - rec.qualified_demand
             usage = 0.0
             if rec.top_of_green:
                 usage = round((rec.net_flow_position /

@@ -24,8 +24,8 @@ class StockBufferProfile(models.Model):
 
     @api.multi
     @api.depends("item_type", "lead_time_id", "lead_time_id.name",
-                 "lead_time_id.factor", "variability_id", "variability_id.name",
-                 "variability_id.factor")
+                 "lead_time_id.factor", "variability_id",
+                 "variability_id.name", "variability_id.factor")
     def _compute_name(self):
         """Get the right summary for this job."""
         for rec in self:

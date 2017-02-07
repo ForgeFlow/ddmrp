@@ -339,8 +339,8 @@ class TestDdmrp(common.TransactionCase):
         })
 
         date_move = datetime.today() + timedelta(days=10)
-        self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
-                                * 2)
+        self.create_pickingoutA(date_move,
+                                orderpointA.order_spike_threshold * 2)
         self.orderpointModel.cron_ddmrp()
 
         expected_result = orderpointA.order_spike_threshold * 2
@@ -366,8 +366,8 @@ class TestDdmrp(common.TransactionCase):
         })
 
         date_move = datetime.today() + timedelta(days=100)
-        self.create_pickingoutA(date_move, orderpointA.order_spike_threshold
-                                * 2)
+        self.create_pickingoutA(date_move,
+                                orderpointA.order_spike_threshold * 2)
         self.orderpointModel.cron_ddmrp()
 
         expected_result = 0.0
@@ -642,4 +642,3 @@ class TestDdmrp(common.TransactionCase):
 
         expected_value = 0.0
         self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
-
