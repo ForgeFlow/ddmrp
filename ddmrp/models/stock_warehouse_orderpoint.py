@@ -115,11 +115,25 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.on_hand_percent = 0.0
 
     @api.multi
-    @api.depends("net_flow_position", "top_of_green", "procurement_ids")
-    def _compute_procure_recommended(self):
+    @api.depends("dlt")
+    def _compute_procure_recommended_date(self):
         for rec in self:
             rec.procure_recommended_date = \
                 fields.date.today() + timedelta(days=int(rec.dlt))
+
+    @api.multi
+    @api.depends("net_flow_position", "dlt", "adu",
+                 "buffer_profile_id.lead_time_id.factor",
+                 "red_zone_qty", "order_cycle", "minimum_order_quantity",
+                 "qty_multiple", "product_uom", "procure_uom_id",
+                 "product_uom.rounding",
+                 "procurement_ids",
+                 "procurement_ids.product_id",
+                 "procurement_ids.state", "procurement_ids.product_uom",
+                 "procurement_ids.product_qty",
+                 "procurement_ids.add_to_net_flow_equation")
+    def _compute_procure_recommended_qty(self):
+        for rec in self:
             procure_recommended_qty = 0.0
             if rec.net_flow_position < rec.top_of_green:
                 qty = rec.top_of_green - rec.net_flow_position\
@@ -131,8 +145,9 @@ class StockWarehouseOrderpoint(models.Model):
 
             reste = rec.qty_multiple > 0 and \
                 procure_recommended_qty % rec.qty_multiple or 0.0
-            if float_compare(reste, 0.0,
-                             precision_rounding=rec.product_uom.rounding) > 0:
+            if float_compare(
+                    reste, 0.0,
+                    precision_rounding=rec.procure_uom_id.rounding) > 0:
                 procure_recommended_qty += rec.qty_multiple - reste
 
             if rec.procure_uom_id:
@@ -221,9 +236,9 @@ class StockWarehouseOrderpoint(models.Model):
                                    store=True)
     # We override the calculation method for the procure recommended qty
     procure_recommended_qty = fields.Float(
-        compute="_compute_procure_recommended")
+        compute="_compute_procure_recommended_qty", store=True)
     procure_recommended_date = fields.Date(
-        compute="_compute_procure_recommended")
+        compute="_compute_procure_recommended_date")
 
     _order = 'planning_priority_level asc, net_flow_position asc'
 

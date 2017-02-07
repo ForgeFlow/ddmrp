@@ -68,6 +68,12 @@
                                 string="Green"
                                 domain="[('execution_priority_level', '=', '3_green')]"/>
                     </group>
+                    <group name="procure_recommendation"
+                           string="Procurement">
+                        <filter name="procure_recommended"
+                                string="Procurement recommended"
+                                domain="[('procure_recommended_qty', '>', 0.0)]"/>
+                    </group>
                 </field>
             </field>
         </record>

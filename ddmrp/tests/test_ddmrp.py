@@ -490,6 +490,95 @@ class TestDdmrp(common.TransactionCase):
         self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
                                 top_of_yellow=120.0)
 
+    def test_procure_recommended(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4
+        })
+        self.orderpointModel.cron_ddmrp()
+        # Now we prepare the shipment of 150
+        date_move = datetime.today()
+        pickingOut = self.create_pickingoutA(date_move, 150)
+        pickingOut.action_confirm()
+        pickingOut.action_assign()
+        pickingOut.action_done()
+
+        self.orderpointModel.cron_ddmrp()
+        expected_value = 40.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        # Now we change the net flow position.
+        # Net Flow position = 200 - 150 + 10 = 60
+        self.quantModel.create(
+            {'location_id': self.binA.id,
+             'company_id': self.main_company.id,
+             'product_id': self.productA.id,
+             'qty': 10.0})
+        self.orderpointModel.cron_ddmrp()
+        expected_value = 30.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        # Now we change the top of green.
+        # red base = dlt * adu * lead time factor = 10 * 2 * 0.5 = 10
+        # red safety = red_base * variability factor = 10 * 0.5 = 5
+        # red zone = red_base + red_safety = 10 + 5 = 15
+        # Top Of Red (TOR) = red zone = 15
+        # yellow zone = dlt * adu = 10 * 2 = 20
+        # Top Of Yellow (TOY) = TOR + yellow zone = 15 + 20 = 35
+        # green_zone_oc = order_cycle * adu = 0 * 4 = 0
+        # green_zone_lt_factor = dlt * adu * lead time factor =10
+        # green_zone_moq = minimum_order_quantity = 0
+        # green_zone_qty = max(green_zone_oc, green_zone_lt_factor,
+        # green_zone_moq) = max(0, 10, 0) = 10
+        # Top Of Green (TOG) = TOY + green_zone_qty = 35 + 10 = 45
+        orderpointA.adu_fixed = 2
+        self.orderpointModel.cron_ddmrp()
+        expected_value = 0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        orderpointA.buffer_profile_id.lead_time_id.factor = 1
+        # Now we change the top of green.
+        # red base = dlt * adu * lead time factor = 10 * 2 * 1 = 20
+        # red safety = red_base * variability factor = 20 * 0.5 = 10
+        # red zone = red_base + red_safety = 20 + 10 = 30
+        # Top Of Red (TOR) = red zone = 25
+        # yellow zone = dlt * adu = 10 * 2 = 20
+        # Top Of Yellow (TOY) = TOR + yellow zone = 30 + 20 = 50
+        # green_zone_oc = order_cycle * adu = 0 * 4 = 0
+        # green_zone_lt_factor = dlt * adu * lead time factor = 20
+        # green_zone_moq = minimum_order_quantity = 0
+        # green_zone_qty = max(green_zone_oc, green_zone_lt_factor,
+        # green_zone_moq) = max(0, 20, 0) = 20
+        # Top Of Green (TOG) = TOY + green_zone_qty = 50 + 20 = 70
+        expected_value = 10
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        orderpointA.minimum_order_quantity = 40
+        # Now we change the top of green.
+        # red base = dlt * adu * lead time factor = 10 * 2 * 1 = 20
+        # red safety = red_base * variability factor = 20 * 0.5 = 10
+        # red zone = red_base + red_safety = 20 + 10 = 30
+        # Top Of Red (TOR) = red zone = 25
+        # yellow zone = dlt * adu = 10 * 2 = 20
+        # Top Of Yellow (TOY) = TOR + yellow zone = 30 + 20 = 50
+        # green_zone_oc = order_cycle * adu = 0 * 4 = 0
+        # green_zone_lt_factor = dlt * adu * lead time factor = 20
+        # green_zone_moq = minimum_order_quantity = 0
+        # green_zone_qty = max(green_zone_oc, green_zone_lt_factor,
+        # green_zone_moq) = max(0, 20, 40) = 40
+        # Top Of Green (TOG) = TOY + green_zone_qty = 50 + 40 = 90
+        expected_value = 30
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
     def test_buffer_zones_all(self):
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
         orderpointA = self.orderpointModel.create({
