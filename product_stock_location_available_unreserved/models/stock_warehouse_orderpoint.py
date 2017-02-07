@@ -15,7 +15,8 @@ class StockWarehouseOrderpoint(models.Model):
                  )
     def _compute_product_location_qty_available_not_res(self):
         for rec in self:
-            for psl in rec.product_stock_location_ids:
+            for psl in self.env['product.stock.location'].search(
+                    ['orderpoint_id', '=', rec.id]):
                 rec.product_location_qty_available_not_res = \
                     psl.product_location_qty_available_not_res
 

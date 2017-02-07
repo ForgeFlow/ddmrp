@@ -40,7 +40,8 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
-                 "buffer_profile_id.variability_id.factor")
+                 "buffer_profile_id.variability_id.factor",
+                 "product_uom.rounding")
     def _compute_red_zone(self):
         for rec in self:
             rec.red_base_qty = float_round(
@@ -53,7 +54,8 @@ class StockWarehouseOrderpoint(models.Model):
 
     @api.multi
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
-                 "red_zone_qty", "order_cycle", "minimum_order_quantity")
+                 "order_cycle", "minimum_order_quantity",
+                 "product_uom.rounding")
     def _compute_green_zone(self):
         for rec in self:
             # Using imposed or desired minimum order cycle
@@ -82,7 +84,8 @@ class StockWarehouseOrderpoint(models.Model):
     @api.depends("dlt", "adu", "buffer_profile_id.lead_time_id.factor",
                  "buffer_profile_id.variability_id.factor",
                  "buffer_profile_id.replenish_method",
-                 "red_zone_qty")
+                 "order_cycle", "minimum_order_quantity",
+                 "product_uom.rounding")
     def _compute_yellow_zone(self):
         for rec in self:
             if rec.buffer_profile_id.replenish_method == 'min_max':
