@@ -28,9 +28,9 @@ UNIT = dp.get_precision('Product Unit of Measure')
 
 
 _PRIORITY_LEVEL = [
-    ('red', 'Red'),
-    ('yellow', 'Yellow'),
-    ('green', 'Green')
+    ('1_red', 'Red'),
+    ('2_yellow', 'Yellow'),
+    ('3_green', 'Green')
 ]
 
 
@@ -101,24 +101,21 @@ class StockWarehouseOrderpoint(models.Model):
     def _compute_execution_priority(self):
         for rec in self:
             if rec.product_location_qty_available_not_res >= rec.top_of_red:
-                rec.execution_priority_level = 'green'
+                rec.execution_priority_level = '3_green'
             elif rec.product_location_qty_available_not_res >= \
                     rec.top_of_red*0.5:
-                rec.execution_priority_level = 'yellow'
+                rec.execution_priority_level = '2_yellow'
             else:
-                rec.execution_priority_level = 'red'
+                rec.    execution_priority_level = '1_red'
             if rec.top_of_green:
-                on_hand_percent = round((
-                    rec.product_location_qty_available_not_res /
-                    rec.top_of_green), 2) * 100
+                rec.on_hand_percent = round((
+                    (rec.product_location_qty_available_not_res /
+                    rec.top_of_green)*100), 2)
             else:
-                on_hand_percent = 0.0
-            rec.execution_priority = '%s %% (%s)' % \
-                                     (on_hand_percent,
-                                      rec.execution_priority_level.title())
+                rec.on_hand_percent = 0.0
 
     @api.multi
-    @api.depends("net_flow_position", "top_of_green")
+    @api.depends("net_flow_position", "top_of_green", "procurement_ids")
     def _compute_procure_recommended(self):
         for rec in self:
             rec.procure_recommended_date = \
@@ -215,22 +212,20 @@ class StockWarehouseOrderpoint(models.Model):
     planning_priority_level = fields.Selection(
         string="Planning Priority Level", selection=_PRIORITY_LEVEL,
         readonly=True)
-    planning_priority = fields.Char(string="Planning priority", readonly=True)
     execution_priority_level = fields.Selection(
         string="On-Hand Alert Level",
         selection=_PRIORITY_LEVEL,
         compute="_compute_execution_priority", store=True)
-    execution_priority = fields.Char(
-        string="On-Hand Alert",
-        compute="_compute_execution_priority", store=True)
-
+    on_hand_percent = fields.Float(string="On Hand/TOG (%)",
+                                   compute="_compute_execution_priority",
+                                   store=True)
     # We override the calculation method for the procure recommended qty
     procure_recommended_qty = fields.Float(
         compute="_compute_procure_recommended")
     procure_recommended_date = fields.Date(
         compute="_compute_procure_recommended")
 
-    _order = 'planning_priority asc'
+    _order = 'planning_priority_level asc, net_flow_position asc'
     
     @api.multi
     @api.onchange("red_zone_qty")
@@ -239,8 +234,8 @@ class StockWarehouseOrderpoint(models.Model):
             rec.product_min_qty = self.red_zone_qty
 
     @api.multi
-    @api.onchange("fixed_adu", "adu_calculation_method")
-    def onchange_fixed_adu(self):
+    @api.onchange("adu_fixed", "adu_calculation_method")
+    def onchange_adu_fixed(self):
         for rec in self:
             if rec.adu_calculation_method.method == 'fixed':
                 rec.adu = self.adu_fixed
@@ -450,8 +445,8 @@ class StockWarehouseOrderpoint(models.Model):
                                     rec.qualified_demand
             usage = 0.0
             if rec.top_of_green:
-                usage = round(rec.net_flow_position /
-                              rec.top_of_green, 2) * 100
+                usage = round((rec.net_flow_position /
+                              rec.top_of_green*100), 2)
             rec.net_flow_position_percent = usage
             for procurement in rec.procurement_ids:
                 if procurement.state not in ('draft', 'cancel'):
@@ -462,14 +457,11 @@ class StockWarehouseOrderpoint(models.Model):
     def _calc_planning_priority(self):
         for rec in self:
             if rec.net_flow_position >= rec.top_of_yellow:
-                rec.planning_priority_level = 'green'
+                rec.planning_priority_level = '3_green'
             elif rec.net_flow_position >= rec.top_of_red:
-                rec.planning_priority_level = 'yellow'
+                rec.planning_priority_level = '2_yellow'
             else:
-                rec.planning_priority_level = 'red'
-            rec.planning_priority = '%s %% (%s)' % (
-                rec.net_flow_position_percent,
-                rec.planning_priority_level.title())
+                rec.planning_priority_level = '1_red'
 
     @api.model
     def cron_ddmrp(self):

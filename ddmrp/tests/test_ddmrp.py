@@ -32,6 +32,9 @@ class TestDdmrp(common.TransactionCase):
         self.estimatePeriodModel = self.env['stock.demand.estimate.period']
         self.aducalcmethodModel = self.env['product.adu.calculation.method']
         self.locationModel = self.env['stock.location']
+        self.make_procurement_orderpoint_model =\
+            self.env['make.procurement.orderpoint']
+        self.user_model = self.env['res.users']
 
         # Refs
         self.main_company = self.env.ref('base.main_company')
@@ -43,6 +46,15 @@ class TestDdmrp(common.TransactionCase):
         self.uom_unit = self.env.ref('product.product_uom_unit')
         self.buffer_profile_pur = self.env.ref(
             'ddmrp.stock_buffer_profile_replenish_purchased_short_low')
+        self.group_stock_manager = self.env.ref('stock.group_stock_manager')
+        self.group_change_procure_qty = self.env.ref(
+            'stock_orderpoint_manual_procurement.'
+            'group_change_orderpoint_procure_qty')
+
+        # Create users
+        self.user = self._create_user('user_1',
+                                      [self.group_stock_manager,
+                                       self.group_change_procure_qty])
 
         self.productA = self.productModel.create(
             {'name': 'product A',
@@ -58,15 +70,29 @@ class TestDdmrp(common.TransactionCase):
             'location_id': self.location_shelf1.id,
             'company_id': self.main_company.id
         })
+        self.locationModel._parent_store_compute()
 
-        self.quantModel.create(
+        self.quant = self.quantModel.create(
             {'location_id': self.binA.id,
              'company_id': self.main_company.id,
              'product_id': self.productA.id,
              'qty': 200.0})
 
+    def _create_user(self, login, groups):
+        """ Create a user."""
+        group_ids = [group.id for group in groups]
+        user = \
+            self.user_model.with_context({'no_reset_password': True}).create({
+                'name': 'Test User',
+                'login': login,
+                'password': 'demo',
+                'email': 'test@yourcompany.com',
+                'groups_id': [(6, 0, group_ids)]
+            })
+        return user
+
     def create_pickingoutA(self, date_move, qty):
-        return self.pickingModel.create({
+        return self.pickingModel.sudo(self.user).create({
             'picking_type_id': self.ref('stock.picking_type_out'),
             'location_id': self.binA.id,
             'location_dest_id': self.customer_location.id,
@@ -83,8 +109,39 @@ class TestDdmrp(common.TransactionCase):
                 })]
         })
 
+    def create_pickinginA(self, date_move, qty):
+        return self.pickingModel.sudo(self.user).create({
+            'picking_type_id': self.ref('stock.picking_type_in'),
+            'location_id': self.supplier_location.id,
+            'location_dest_id': self.binA.id,
+            'move_lines': [
+                (0, 0, {
+                    'name': 'Test move',
+                    'product_id': self.productA.id,
+                    'date_expected': date_move,
+                    'date': date_move,
+                    'product_uom': self.productA.uom_id.id,
+                    'product_uom_qty': qty,
+                    'location_id': self.supplier_location.id,
+                    'location_dest_id': self.binA.id,
+                })]
+        })
+
+    def create_orderpoint_procurement(self, orderpoint):
+        """Make Procurement from Reordering Rule"""
+        context = {
+            'active_model': 'stock.warehouse.orderpoint',
+            'active_ids': orderpoint.ids,
+            'active_id': orderpoint.id
+        }
+        wizard = self.make_procurement_orderpoint_model.sudo(self.user).\
+            with_context(context).create({})
+        wizard.make_procurement()
+        return wizard
+
     def test_adu_calculation_fixed(self):
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+
         orderpointA = self.orderpointModel.create({
             'buffer_profile_id': self.buffer_profile_pur.id,
             'product_id': self.productA.id,
@@ -376,13 +433,62 @@ class TestDdmrp(common.TransactionCase):
         self._check_red_zone(orderpointA, red_base_qty=20, red_safety_qty=10,
                              red_zone_qty=30)
 
-        # Change various parameters
         orderpointA.dlt = 20
+
+        self._check_red_zone(orderpointA, red_base_qty=40, red_safety_qty=20,
+                             red_zone_qty=60)
+
         orderpointA.buffer_profile_id.lead_time_id.factor = 1
+
+        self._check_red_zone(orderpointA, red_base_qty=80, red_safety_qty=40,
+                             red_zone_qty=120)
+
         orderpointA.buffer_profile_id.variability_id.factor = 1
 
         self._check_red_zone(orderpointA, red_base_qty=80, red_safety_qty=80,
                              red_zone_qty=160)
+
+        orderpointA.adu_fixed = 2
+        self.orderpointModel.cron_ddmrp()
+
+        self._check_red_zone(orderpointA, red_base_qty=40, red_safety_qty=40,
+                             red_zone_qty=80)
+
+    def test_buffer_zones_yellow(self):
+        method = self.env.ref('ddmrp.adu_calculation_method_fixed')
+        orderpointA = self.orderpointModel.create({
+            'buffer_profile_id': self.buffer_profile_pur.id,
+            'product_id': self.productA.id,
+            'location_id': self.stock_location.id,
+            'warehouse_id': self.warehouse.id,
+            'product_min_qty': 0.0,
+            'product_max_qty': 0.0,
+            'qty_multiple': 0.0,
+            'dlt': 10,
+            'adu_calculation_method': method.id,
+            'adu_fixed': 4
+        })
+        self.orderpointModel.cron_ddmrp()
+
+        self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
+                                top_of_yellow=70.0)
+
+        orderpointA.dlt = 20
+
+        self._check_yellow_zone(orderpointA, yellow_zone_qty=80.0,
+                                top_of_yellow=140.0)
+
+        orderpointA.adu_fixed = 2
+        self.orderpointModel.cron_ddmrp()
+
+        self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
+                                top_of_yellow=70.0)
+
+        orderpointA.buffer_profile_id.lead_time_id.factor = 1
+        orderpointA.buffer_profile_id.variability_id.factor = 1
+
+        self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
+                                top_of_yellow=120.0)
 
     def test_buffer_zones_all(self):
         method = self.env.ref('ddmrp.adu_calculation_method_fixed')
@@ -399,14 +505,141 @@ class TestDdmrp(common.TransactionCase):
             'adu_fixed': 4
         })
         self.orderpointModel.cron_ddmrp()
-
+        # red base = dlt * adu * lead time factor = 10 * 4 * 0.5 = 20
+        # red safety = red_base * variability factor = 20 * 0.5 = 10
+        # red zone = red_base + red_safety = 20 + 10 = 30
+        # Top Of Red (TOR) = red zone = 30
         self._check_red_zone(orderpointA, red_base_qty=20.0,
                              red_safety_qty=10.0,
                              red_zone_qty=30.0)
 
+        # yellow zone = dlt * adu = 10 * 4 = 40
+        # Top Of Yellow (TOY) = TOR + yellow zone = 30 + 40 = 70
         self._check_yellow_zone(orderpointA, yellow_zone_qty=40.0,
                                 top_of_yellow=70.0)
 
+        # green_zone_oc = order_cycle * adu = 0 * 4 = 0
+        # green_zone_lt_factor = dlt * adu * lead time factor = 20
+        # green_zone_moq = minimum_order_quantity = 0
+        # green_zone_qty = max(green_zone_oc, green_zone_lt_factor,
+        # green_zone_moq) = max(0, 20, 0) = 20
+        # Top Of Green (TOG) = TOY + green_zone_qty = 70 + 20 = 90
         self._check_green_zone(orderpointA, green_zone_oc=0.0,
                                green_zone_lt_factor=20.0, green_zone_moq=0.0,
                                green_zone_qty=20.0, top_of_green=90.0)
+
+        # Net Flow Position = on hand + incoming - qualified demand = 200 + 0
+        #  - 0 = 200
+        expected_value = 200.0
+        self.assertEqual(orderpointA.net_flow_position, expected_value)
+
+        # Net Flow Position Percent = (Net Flow Position / TOG)*100 = (
+        # 200/90)*100 = 55.56 %
+        expected_value = 222.22
+        self.assertEqual(orderpointA.net_flow_position_percent, expected_value)
+
+        # Planning priority level
+        expected_value = '3_green'
+        self.assertEqual(orderpointA.planning_priority_level, expected_value)
+
+        # On hand/TOG = (200 / 90) * 100 = 222.22
+        expected_value = 222.22
+        self.assertEqual(orderpointA.on_hand_percent, expected_value)
+
+        # Execution priority level
+        expected_value = '3_green'
+        self.assertEqual(orderpointA.execution_priority_level, expected_value)
+
+        # Procure recommended quantity = TOG - Net Flow Position if > 0 = 90
+        # - 200 => 0.0
+        expected_value = 0.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        # Now we prepare the shipment of 150
+        date_move = datetime.today()
+        pickingOut = self.create_pickingoutA(date_move, 150)
+        pickingOut.action_confirm()
+
+        self.orderpointModel.cron_ddmrp()
+
+        # Net Flow Position = on hand + incoming - qualified demand = 200 + 0
+        #  - 150 = 50
+        expected_value = 50.0
+        self.assertEqual(orderpointA.net_flow_position, expected_value)
+
+        # Net Flow Position Percent = (Net Flow Position / TOG)*100 = (
+        # 50/90)*100 = 55.56 %
+        expected_value = 55.56
+        self.assertEqual(orderpointA.net_flow_position_percent, expected_value)
+
+        # Planning priority level
+        expected_value = '2_yellow'
+        self.assertEqual(orderpointA.planning_priority_level, expected_value)
+
+        # On hand/TOG = (200 / 90) * 100 = 222.22
+        expected_value = 222.22
+        self.assertEqual(orderpointA.on_hand_percent, expected_value)
+
+        # Execution priority level
+        expected_value = '3_green'
+        self.assertEqual(orderpointA.execution_priority_level, expected_value)
+
+        # Now we confirm the shipment of the 150
+        pickingOut.action_assign()
+
+        # On hand/TOG = (50 / 90) * 100 = 55.56
+        expected_value = 55.56
+        self.assertEqual(orderpointA.on_hand_percent, expected_value)
+
+        # Execution priority level. Considering that the quantity available
+        # unrestricted is 50, and top of red is 30, we are in the green on
+        # hand zone.
+        expected_value = '3_green'
+        self.assertEqual(orderpointA.execution_priority_level, expected_value)
+
+        # Procure recommended quantity = TOG - Net Flow Position if > 0 = 90
+        # - 50 => 40.0
+        expected_value = 40.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        # Now we ship them
+        pickingOut.action_done()
+
+        self.orderpointModel.cron_ddmrp()
+
+        # Net Flow Position = on hand + incoming - qualified demand = 200 + 0
+        #  - 150 = 50
+        expected_value = 50.0
+        self.assertEqual(orderpointA.net_flow_position, expected_value)
+
+        # Net Flow Position Percent = (Net Flow Position / TOG)*100 = (
+        # 50/90)*100 = 55.56 %
+        expected_value = 55.56
+        self.assertEqual(orderpointA.net_flow_position_percent, expected_value)
+
+        # Planning priority level
+        expected_value = '2_yellow'
+        self.assertEqual(orderpointA.planning_priority_level, expected_value)
+
+        # On hand/TOG = (50 / 90) * 100 = 55.56
+        expected_value = 55.56
+        self.assertEqual(orderpointA.on_hand_percent, expected_value)
+
+        # Execution priority level
+        expected_value = '3_green'
+        self.assertEqual(orderpointA.execution_priority_level, expected_value)
+
+        # Procure recommended quantity = TOG - Net Flow Position if > 0 = 90
+        # - 50 => 40.0
+        expected_value = 40.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
+        # Now we create a procurement order, based on the procurement
+        # recommendation
+        self.create_orderpoint_procurement(orderpointA)
+        self.assertEqual(orderpointA.procurement_ids.product_qty, 40.0)
+        # We expect that the procurement recommendation is now 0
+
+        expected_value = 0.0
+        self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
+
