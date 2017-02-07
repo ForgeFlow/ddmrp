@@ -148,9 +148,15 @@ class StockWarehouseOrderpoint(models.Model):
             if procure_recommended_qty > 0.0:
                 reste = rec.qty_multiple > 0 and \
                     procure_recommended_qty % rec.qty_multiple or 0.0
+
+                if rec.procure_uom_id:
+                    rounding = rec.procure_uom_id.rounding
+                else:
+                    rounding = rec.product_uom.rounding
+
                 if float_compare(
                         reste, 0.0,
-                        precision_rounding=rec.procure_uom_id.rounding) > 0:
+                        precision_rounding=rounding) > 0:
                     procure_recommended_qty += rec.qty_multiple - reste
 
                 if rec.procure_uom_id:
