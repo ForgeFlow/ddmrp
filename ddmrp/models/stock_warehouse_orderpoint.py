@@ -11,7 +11,7 @@ from openerp.tools import float_compare, float_round
 import operator as py_operator
 import logging
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 OPERATORS = {
@@ -493,10 +493,12 @@ class StockWarehouseOrderpoint(models.Model):
         """calculate key DDMRP parameters for each orderpoint
         Called by cronjob.
         """
+        _logger.info("Start cron_ddmrp.")
         orderpoints = self.search([])
         orderpoints._calc_adu()
         orderpoints._calc_qualified_demand()
         orderpoints._calc_net_flow_position()
         orderpoints._calc_planning_priority()
+        _logger.info("End cron_ddmrp.")
 
         return True
