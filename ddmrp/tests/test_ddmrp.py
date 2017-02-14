@@ -511,7 +511,6 @@ class TestDdmrp(common.TransactionCase):
         pickingOut.action_confirm()
         pickingOut.action_assign()
         pickingOut.action_done()
-
         self.orderpointModel.cron_ddmrp()
         expected_value = 40.0
         self.assertEqual(orderpointA.procure_recommended_qty, expected_value)
@@ -675,6 +674,7 @@ class TestDdmrp(common.TransactionCase):
 
         # Now we confirm the shipment of the 150
         pickingOut.action_assign()
+        self.orderpointModel.cron_ddmrp()
 
         # On hand/TOG = (50 / 90) * 100 = 55.56
         expected_value = 55.56
@@ -693,7 +693,6 @@ class TestDdmrp(common.TransactionCase):
 
         # Now we ship them
         pickingOut.action_done()
-
         self.orderpointModel.cron_ddmrp()
 
         # Net Flow Position = on hand + incoming - qualified demand = 200 + 0

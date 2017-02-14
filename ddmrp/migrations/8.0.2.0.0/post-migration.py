@@ -59,7 +59,8 @@ def migrate_lead_time(cr):
 
 def run_cron_ddmrp(cr):
     pool = pooler.get_pool(cr.dbname)
-    pool['stock.warehouse.orderpoint'].cron_ddmrp(cr, SUPERUSER_ID)
+    pool['stock.warehouse.orderpoint'].cron_ddmrp(cr, SUPERUSER_ID,
+                                                  automatic=True)
 
 
 def migrate(cr, version):
@@ -67,4 +68,4 @@ def migrate(cr, version):
         return
     migrate_variability(cr)
     migrate_lead_time(cr)
-    run_cron_ddmrp(cr)
+
