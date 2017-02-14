@@ -68,4 +68,4 @@ def migrate(cr, version):
         return
     migrate_variability(cr)
     migrate_lead_time(cr)
-    run_cron_ddmrp(cr)
+
