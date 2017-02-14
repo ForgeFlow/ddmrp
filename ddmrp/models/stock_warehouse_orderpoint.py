@@ -487,17 +487,29 @@ class StockWarehouseOrderpoint(models.Model):
                 rec.on_hand_percent = 0.0
 
     @api.model
-    def cron_ddmrp(self):
+    def cron_ddmrp(self, automatic=False):
         """calculate key DDMRP parameters for each orderpoint
         Called by cronjob.
         """
         _logger.info("Start cron_ddmrp.")
         orderpoints = self.search([])
-        orderpoints._calc_adu()
-        orderpoints._calc_qualified_demand()
-        orderpoints._calc_net_flow_position()
-        orderpoints._calc_planning_priority()
-        orderpoints._calc_execution_priority()
+        for op in orderpoints:
+            try:
+                op._calc_adu()
+                op._calc_qualified_demand()
+                op._calc_net_flow_position()
+                op._calc_planning_priority()
+                op._calc_execution_priority()
+                if automatic:
+                    self.env.cr.commit()
+            except Exception:
+                if automatic:
+                    self.env.cr.rollback()
+                    _logger.exception(
+                        'Fail to create recurring invoice for orderpoint %s',
+                        op.name)
+                else:
+                    raise
         _logger.info("End cron_ddmrp.")
 
         return True
