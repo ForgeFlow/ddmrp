@@ -20,5 +20,4 @@ class StockWarehouseOrderpoint(models.Model):
 
     product_location_qty_available_not_res = fields.Float(
         string='Quantity On Location (Unreserved)',
-        compute='_compute_product_available_qty',
-        store='True')
+        compute='_compute_product_available_qty')

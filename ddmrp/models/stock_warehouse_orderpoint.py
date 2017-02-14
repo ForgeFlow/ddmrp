@@ -97,27 +97,6 @@ class StockWarehouseOrderpoint(models.Model):
             rec.top_of_yellow = rec.yellow_zone_qty + rec.red_zone_qty
 
     @api.multi
-    @api.depends("top_of_yellow", "top_of_red",
-                 'product_stock_location_ids',
-                 'product_stock_location_ids.'
-                 'product_location_qty_available_not_res')
-    def _compute_execution_priority(self):
-        for rec in self:
-            if rec.product_location_qty_available_not_res >= rec.top_of_red:
-                rec.execution_priority_level = '3_green'
-            elif rec.product_location_qty_available_not_res >= \
-                    rec.top_of_red*0.5:
-                rec.execution_priority_level = '2_yellow'
-            else:
-                rec.    execution_priority_level = '1_red'
-            if rec.top_of_green:
-                rec.on_hand_percent = round((
-                    (rec.product_location_qty_available_not_res /
-                     rec.top_of_green)*100), 2)
-            else:
-                rec.on_hand_percent = 0.0
-
-    @api.multi
     @api.depends("dlt")
     def _compute_procure_recommended_date(self):
         for rec in self:
@@ -240,11 +219,9 @@ class StockWarehouseOrderpoint(models.Model):
         readonly=True)
     execution_priority_level = fields.Selection(
         string="On-Hand Alert Level",
-        selection=_PRIORITY_LEVEL,
-        compute="_compute_execution_priority", store=True)
+        selection=_PRIORITY_LEVEL, store=True, readonly=True)
     on_hand_percent = fields.Float(string="On Hand/TOG (%)",
-                                   compute="_compute_execution_priority",
-                                   store=True)
+                                   store=True, readonly=True)
     # We override the calculation method for the procure recommended qty
     procure_recommended_qty = fields.Float(
         compute="_compute_procure_recommended_qty", store=True)
@@ -446,6 +423,7 @@ class StockWarehouseOrderpoint(models.Model):
     @api.multi
     def _calc_qualified_demand(self):
         for rec in self:
+            rec.refresh()
             rec.qualified_demand = 0.0
             domain = rec._search_stock_moves_qualified_demand_domain()
             moves = self.env['stock.move'].search(domain)
@@ -466,6 +444,7 @@ class StockWarehouseOrderpoint(models.Model):
     @api.multi
     def _calc_net_flow_position(self):
         for rec in self:
+            rec.refresh()
             rec.net_flow_position = rec.product_location_qty + \
                 rec.incoming_location_qty - rec.qualified_demand
             usage = 0.0
@@ -481,12 +460,31 @@ class StockWarehouseOrderpoint(models.Model):
     @api.multi
     def _calc_planning_priority(self):
         for rec in self:
+            rec.refresh()
             if rec.net_flow_position >= rec.top_of_yellow:
                 rec.planning_priority_level = '3_green'
             elif rec.net_flow_position >= rec.top_of_red:
                 rec.planning_priority_level = '2_yellow'
             else:
                 rec.planning_priority_level = '1_red'
+
+    @api.multi
+    def _calc_execution_priority(self):
+        for rec in self:
+            rec.refresh()
+            if rec.product_location_qty_available_not_res >= rec.top_of_red:
+                rec.execution_priority_level = '3_green'
+            elif rec.product_location_qty_available_not_res >= \
+                    rec.top_of_red*0.5:
+                rec.execution_priority_level = '2_yellow'
+            else:
+                rec.execution_priority_level = '1_red'
+            if rec.top_of_green:
+                rec.on_hand_percent = round((
+                    (rec.product_location_qty_available_not_res /
+                     rec.top_of_green)*100), 2)
+            else:
+                rec.on_hand_percent = 0.0
 
     @api.model
     def cron_ddmrp(self):
@@ -499,6 +497,7 @@ class StockWarehouseOrderpoint(models.Model):
         orderpoints._calc_qualified_demand()
         orderpoints._calc_net_flow_position()
         orderpoints._calc_planning_priority()
+        orderpoints._calc_execution_priority()
         _logger.info("End cron_ddmrp.")
 
         return True
