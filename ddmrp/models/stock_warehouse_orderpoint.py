@@ -424,7 +424,7 @@ class StockWarehouseOrderpoint(models.Model):
                 ('location_id', 'in', locations.ids),
                 ('location_dest_id', 'not in', locations.ids),
                 ('product_id', '=', self.product_id.id),
-                ('date', '<=', date_to)]
+                ('date_expected', '<=', date_to)]
 
     @api.multi
     def _compute_adu_future_demand(self):
@@ -484,7 +484,7 @@ class StockWarehouseOrderpoint(models.Model):
                                  'assigned']),
                 ('location_id', 'in', locations.ids),
                 ('location_dest_id', 'not in', locations.ids),
-                ('date', '<=', date_to)]
+                ('date_expected', '<=', date_to)]
 
     @api.multi
     def _calc_qualified_demand(self):
@@ -495,7 +495,7 @@ class StockWarehouseOrderpoint(models.Model):
             moves = self.env['stock.move'].search(domain)
             demand_by_days = {}
             move_dates = [fields.Datetime.from_string(dt).date() for dt in
-                          moves.mapped('date')]
+                          moves.mapped('date_expected')]
             for move_date in move_dates:
                 demand_by_days[move_date] = 0.0
             for move in moves:
