@@ -6,7 +6,7 @@
 {
     "name": "DDMRP History",
     "summary": "Allow to store historical data of DDMRP buffers.",
-    "version": "9.0.1.0.0",
+    "version": "10.0.1.0.0",
     "author": "Eficent",
     "website": "http://www.eficent.com",
     "category": "Warehouse Management",
