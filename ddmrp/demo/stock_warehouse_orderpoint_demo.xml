@@ -155,5 +155,20 @@
             <field name="location_id" ref="stock.stock_location_stock"/>
         </record>
 
+        <record id="stock_warehouse_orderpoint_example"
+                model="stock.warehouse.orderpoint">
+            <field name="product_id" ref="product_product_example"/>
+            <field name="buffer_profile_id" ref="stock_buffer_profile_replenish_purchased_medium_medium"/>
+            <field name="adu_calculation_method" ref="adu_calculation_method_fixed"/>
+            <field name="adu_fixed">10</field>
+            <field name="order_spike_horizon">8</field>
+            <field name="product_min_qty">0</field>
+            <field name="product_max_qty">0</field>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="location_id" ref="stock.stock_location_stock"/>
+            <field name="minimum_order_quantity">20</field>
+            <field name="lead_days">7</field>
+        </record>
+
     </data>
 </odoo>

@@ -226,5 +226,14 @@
             <field name="route_ids" eval="[(6, 0, [ref('purchase.route_warehouse0_buy')])]"/>
         </record>
 
+        <record id="product_product_example" model="product.product">
+            <field name="name">Example</field>
+            <field name="categ_id" ref="product_category_example"/>
+            <field name="type">product</field>
+            <field name="uom_id" ref="product.product_uom_unit"/>
+            <field name="uom_po_id" ref="product.product_uom_unit"/>
+            <field name="route_ids" eval="[(6, 0, [ref('purchase.route_warehouse0_buy')])]"/>
+        </record>
+
     </data>
 </odoo>
