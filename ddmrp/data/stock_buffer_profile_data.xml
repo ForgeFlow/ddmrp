@@ -9,7 +9,7 @@
             <field name="lead_time_id"
                    ref="ddmrp.stock_buffer_profile_lead_time_short"/>
             <field name="variability_id"
-                   ref="ddmrp.stock_buffer_profile_variability_medium"/>
+                   ref="ddmrp.stock_buffer_profile_variability_low"/>
         </record>
 
         <record id="stock_buffer_profile_replenish_manufactured_short_low"
@@ -19,7 +19,7 @@
             <field name="lead_time_id"
                    ref="ddmrp.stock_buffer_profile_lead_time_short"/>
             <field name="variability_id"
-                   ref="ddmrp.stock_buffer_profile_variability_medium"/>
+                   ref="ddmrp.stock_buffer_profile_variability_low"/>
         </record>
 
         <record id="stock_buffer_profile_replenish_distributed_short_low"
@@ -29,7 +29,7 @@
             <field name="lead_time_id"
                    ref="ddmrp.stock_buffer_profile_lead_time_short"/>
             <field name="variability_id"
-                   ref="ddmrp.stock_buffer_profile_variability_medium"/>
+                   ref="ddmrp.stock_buffer_profile_variability_low"/>
         </record>
     <!--Short_medium-->
         <record id="stock_buffer_profile_replenish_purchased_short_medium"
