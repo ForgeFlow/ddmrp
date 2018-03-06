@@ -181,10 +181,7 @@
             <field name="variability_id"
                    ref="ddmrp.stock_buffer_profile_variability_high"/>
         </record>
-
-
-
-        <!--long_low-->
+    <!--long_low-->
         <record id="stock_buffer_profile_replenish_purchased_long_low"
                 model="stock.buffer.profile">
             <field name="replenish_method">replenish</field>

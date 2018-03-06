@@ -515,11 +515,11 @@ class StockWarehouseOrderpoint(models.Model):
             moves = self.env['stock.move'].search(domain)
             demand_by_days = {}
             move_dates = [fields.Datetime.from_string(dt).date() for dt in
-                          moves.mapped('date_expected')]
+                          moves.mapped('date')]
             for move_date in move_dates:
                 demand_by_days[move_date] = 0.0
             for move in moves:
-                date = fields.Datetime.from_string(move.date_expected).date()
+                date = fields.Datetime.from_string(move.date).date()
                 demand_by_days[date] += \
                     move.product_qty - move.reserved_availability
             for date in demand_by_days.keys():
