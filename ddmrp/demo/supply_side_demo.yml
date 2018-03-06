@@ -7,6 +7,7 @@
     min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=2)).day)"
     location_id: stock.stock_location_suppliers
     location_dest_id: stock.stock_location_stock
+    state: 'assigned'
     move_lines:
       - product_id: product_product_example
         product_uom: product.product_uom_unit
@@ -24,6 +25,7 @@
     min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=6)).day)"
     location_id: stock.stock_location_suppliers
     location_dest_id: stock.stock_location_stock
+    state: 'assigned'
     move_lines:
       - product_id: product_product_example
         product_uom: product.product_uom_unit
@@ -31,3 +33,451 @@
         picking_type_id: stock.picking_type_in
         location_id: stock.stock_location_suppliers
         location_dest_id: stock.stock_location_stock
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_1}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=1)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 10.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_2}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=2)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 18.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_3}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=3)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 17.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_4}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=4)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 6.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_5}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=5)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 5.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_6}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=6)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 9.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_7}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=7)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 10.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_8}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=8)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 30.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_9}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=9)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 5.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_10}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=10)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 6.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_11}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=11)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 9.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_12}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=12)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 10.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_13}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=13)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 20.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_14}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=14)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 6.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_15}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=15)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 11.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_16}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=16)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 10.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_17}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=17)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 18.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_18}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=18)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 12.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_19}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=19)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 8.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_20}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=20)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 6.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_21}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=21)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 5.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_22}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=22)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 8.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_23}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=23)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 2.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_24}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=24)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 12.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_25}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=25)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 20.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_26}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=26)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 9.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_27}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=27)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 8.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
+
+-
+ !record {model: stock.picking, id: outgoing_shipment_example_day_28}:
+    picking_type_id: stock.picking_type_out
+    origin: 'outgoing shipment main_warehouse'
+    partner_id: base.res_partner_1
+    min_date: !eval "'%s-%s-%s 08:00:00' % (datetime.now().year,(datetime.now()).month,(datetime.now()+timedelta(days=28)).day)"
+    location_id: stock.stock_location_stock
+    location_dest_id: stock.stock_location_customers
+    move_lines:
+      - product_id: product_product_example
+        product_uom: product.product_uom_unit
+        product_uom_qty: 5.0
+        picking_type_id: stock.picking_type_out
+        location_id: stock.stock_location_stock
+        location_dest_id: stock.stock_location_customers
