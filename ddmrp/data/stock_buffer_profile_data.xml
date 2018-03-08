@@ -99,7 +99,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_medium"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 
     <record id="stock_buffer_profile_replenish_manufactured_medium_low"
@@ -109,7 +109,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_medium"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 
     <record id="stock_buffer_profile_replenish_distributed_medium_low"
@@ -119,7 +119,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_medium"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 <!--medium_medium-->
     <record id="stock_buffer_profile_replenish_purchased_medium_medium"
@@ -189,7 +189,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_long"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 
     <record id="stock_buffer_profile_replenish_manufactured_long_low"
@@ -199,7 +199,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_long"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 
     <record id="stock_buffer_profile_replenish_distributed_long_low"
@@ -209,7 +209,7 @@
         <field name="lead_time_id"
                ref="ddmrp.stock_buffer_profile_lead_time_long"/>
         <field name="variability_id"
-               ref="ddmrp.stock_buffer_profile_variability_medium"/>
+               ref="ddmrp.stock_buffer_profile_variability_low"/>
     </record>
 <!--long_medium-->
     <record id="stock_buffer_profile_replenish_purchased_long_medium"
