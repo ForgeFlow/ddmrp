@@ -161,9 +161,9 @@ class StockWarehouseOrderpoint(models.Model):
 
             N = len(history)
 
-            categories = ['dark_red_low', 'top_of_red_low', 'top_of_yellow_low',
-                          'top_of_green', 'top_of_yellow', 'top_of_red',
-                          'dark_red']
+            categories = ['dark_red_low', 'top_of_red_low',
+                          'top_of_yellow_low', 'top_of_green',
+                          'top_of_yellow', 'top_of_red', 'dark_red']
             data = {}
 
             dates = [datetime.strptime(
@@ -175,16 +175,15 @@ class StockWarehouseOrderpoint(models.Model):
             data[categories[3]] = [r.top_of_green - r.top_of_yellow for r in
                                    history]
             data[categories[4]] = [r.top_of_yellow - r.top_of_red - (
-                                  r.top_of_green - r.top_of_yellow) for r in
-                                  history]
+                r.top_of_green - r.top_of_yellow) for r in history]
             data[categories[5]] = [r.top_of_green - r.top_of_yellow for r in
                                    history]
-            data[categories[6]] = [finish_stack - r.top_of_red - (
-                                   r.top_of_green - r.top_of_yellow) - (
-                                   r.top_of_yellow - r.top_of_red - (
-                                        r.top_of_green - r.top_of_yellow)) - (
-                                   r.top_of_green - r.top_of_yellow) for r
-                                   in history]
+            data[categories[6]] = \
+                [finish_stack - r.top_of_red - (r.top_of_green -
+                                                r.top_of_yellow) -
+                 (r.top_of_yellow - r.top_of_red - (r.top_of_green -
+                  r.top_of_yellow)) - (r.top_of_green - r.top_of_yellow) for r
+                 in history]
 
             data['net_flow_position'] = [r.net_flow_position for r in history]
             data['on_hand_position'] = [r.on_hand_position for r in history]
