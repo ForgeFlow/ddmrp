@@ -54,11 +54,11 @@ class StockWarehouseOrderpoint(models.Model):
             if rec.replenish_method in ['replenish', 'min_max']:
                 rec.red_base_qty = float_round(
                     rec.dlt * rec.adu *
-                    rec.buffer_profile_id.lead_time_id.factor,
+                    (1 + rec.buffer_profile_id.lead_time_id.factor),
                     precision_rounding=rec.product_uom.rounding)
                 rec.red_safety_qty = float_round(
                     rec.red_base_qty *
-                    rec.buffer_profile_id.variability_id.factor,
+                    (1 + rec.buffer_profile_id.variability_id.factor),
                     precision_rounding=rec.product_uom.rounding)
                 rec.red_zone_qty = rec.red_base_qty + rec.red_safety_qty
             else:
