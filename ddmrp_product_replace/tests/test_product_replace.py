@@ -45,8 +45,12 @@ class TestDDMRPProductReplace(TransactionCase):
         self.assertEqual(new_product.name, '901p Replacement')
         self.assertEqual(new_product.default_code, 'ABCDE012345')
         self.assertEqual(new_product.route_ids, self.old_product.route_ids)
-        self.assertEqual(new_product.product_putaway_ids,
-                         self.old_product.product_putaway_ids)
+
+        new_product_putaways = [(p.putaway_id, p.fixed_location_id) for p in
+                                new_product.product_putaway_ids]
+        for putaway in self.old_product.product_putaway_ids:
+            putaway_tuple = (putaway.putaway_id, putaway.fixed_location_id)
+            self.assertIn(putaway_tuple, new_product_putaways)
 
         self.assertEqual(self.orderpoint.product_id, new_product)
-        self.assertEqual(self.orderpoint.demand_product_ids, self.old_product)
+        self.assertIn(self.old_product, self.orderpoint.demand_product_ids)
