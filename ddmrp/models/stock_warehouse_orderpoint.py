@@ -51,14 +51,16 @@ class StockWarehouseOrderpoint(models.Model):
                  "product_uom.rounding", "red_override")
     def _compute_red_zone(self):
         for rec in self:
+            
             if rec.replenish_method in ['replenish', 'min_max']:
+                factor = rec.buffer_profile_id.lead_time_id.factor
+                if rec.replenish_method == 'min_max':
+                    factor = factor + 1
                 rec.red_base_qty = float_round(
-                    rec.dlt * rec.adu *
-                    (1 + rec.buffer_profile_id.lead_time_id.factor),
+                    rec.dlt * rec.adu * factor,
                     precision_rounding=rec.product_uom.rounding)
                 rec.red_safety_qty = float_round(
-                    rec.red_base_qty *
-                    (1 + rec.buffer_profile_id.variability_id.factor),
+                    rec.red_base_qty * factor,
                     precision_rounding=rec.product_uom.rounding)
                 rec.red_zone_qty = rec.red_base_qty + rec.red_safety_qty
             else:
