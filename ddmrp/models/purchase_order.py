@@ -20,6 +20,22 @@ class PurchaseOrderLine(models.Model):
         return record
 
     @api.multi
+    @api.depends("product_id")
+    def _compute_orderpoint_id(self):
+        for rec in self:
+            if rec.order_id.origin and not rec.orderpoint_id:
+                group_name = rec.order_id.origin.split(", ")[-1]
+                if group_name != '':
+                    group_id = self.env['procurement.group'].\
+                        search([('name', '=', group_name)])
+                    if group_id:
+                        orderpoint_id = self.env['stock.warehouse.orderpoint'].\
+                            search([('product_id', '=', rec.product_id.id),
+                                    ('group_id', '=', group_id.id)])
+                        if orderpoint_id:
+                            rec.orderpoint_id = orderpoint_id[0]
+
+    @api.multi
     def _calc_execution_priority(self):
         prods = self.filtered(
             lambda r: r.orderpoint_id and r.state not in ['done', 'cancel'])
@@ -32,7 +48,8 @@ class PurchaseOrderLine(models.Model):
             'on_hand_percent': None,
         })
 
-    orderpoint_id = fields.Many2one(index=True, readonly=True)
+    orderpoint_id = fields.Many2one(compute='_compute_orderpoint_id',
+                                    store=True, index=True, readonly=True)
     execution_priority_level = fields.Selection(
         string="Buffer On-Hand Status Level",
         selection=_PRIORITY_LEVEL, readonly=True,
