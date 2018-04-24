@@ -29,7 +29,8 @@ class PurchaseOrderLine(models.Model):
                     group_id = self.env['procurement.group'].\
                         search([('name', '=', group_name)])
                     if group_id:
-                        orderpoint_id = self.env['stock.warehouse.orderpoint'].\
+                        orderpoint_id = \
+                            self.env['stock.warehouse.orderpoint'].\
                             search([('product_id', '=', rec.product_id.id),
                                     ('group_id', '=', group_id.id)])
                         if orderpoint_id:
