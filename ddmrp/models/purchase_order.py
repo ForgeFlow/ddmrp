@@ -20,7 +20,7 @@ class PurchaseOrderLine(models.Model):
         return record
 
     @api.multi
-    @api.depends("product_id")
+    @api.depends("product_id", "order_id.origin", "orderpoint_id")
     def _compute_orderpoint_id(self):
         for rec in self:
             if rec.order_id.origin and not rec.orderpoint_id:
@@ -32,9 +32,8 @@ class PurchaseOrderLine(models.Model):
                         orderpoint_id = \
                             self.env['stock.warehouse.orderpoint'].\
                             search([('product_id', '=', rec.product_id.id),
-                                    ('group_id', '=', group_id.id)])
-                        if orderpoint_id:
-                            rec.orderpoint_id = orderpoint_id[0]
+                                    ('group_id', '=', group_id.id)], limit=1)
+                            rec.orderpoint_id = orderpoint_id
 
     @api.multi
     def _calc_execution_priority(self):
