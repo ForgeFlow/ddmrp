@@ -33,7 +33,7 @@ class PurchaseOrderLine(models.Model):
                             self.env['stock.warehouse.orderpoint'].\
                             search([('product_id', '=', rec.product_id.id),
                                     ('group_id', '=', group_id.id)], limit=1)
-                            rec.orderpoint_id = orderpoint_id
+                        rec.orderpoint_id = orderpoint_id
 
     @api.multi
     def _calc_execution_priority(self):
