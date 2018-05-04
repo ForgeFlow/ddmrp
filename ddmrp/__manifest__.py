@@ -21,6 +21,7 @@
         "stock_available_unreserved",
         "stock_orderpoint_uom",
         "stock_orderpoint_manual_procurement",
+        "stock_orderpoint_purchase_link",
         "stock_demand_estimate",
         "web_widget_bokeh_chart",
         "mrp_mto_with_stock",
