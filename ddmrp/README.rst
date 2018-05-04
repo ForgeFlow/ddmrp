@@ -2,9 +2,9 @@
    :target: https://www.gnu.org/licenses/agpl.html
    :alt: License: AGPL-3
 
-=====
-DDMRP
-=====
+====================================================
+Demand Driven Material Requirements Planning (DDMRP)
+====================================================
 
 Demand Driven Material Requirements Planning is a formal multi-echelon
 planning and execution method developed by Ms. Carol Ptak and Mr. Chad Smith.
@@ -82,6 +82,7 @@ Modules from http://github.com/OCA/stock-logistics-warehouse :
 * 'stock_available_unreserved'
 * 'stock_orderpoint_uom'
 * 'stock_orderpoint_manual_procurement'
+* 'stock_orderpoint_purchase_link'
 * 'stock_demand_estimate'
 
 Modules from http://github.com/OCA/server-tools
@@ -115,18 +116,18 @@ The DLT is automatically computed by the system.
 A) For manufactured products' buffers just remember to provide and
    set properly the following information:
 
-* The *Manufacturing Lead Time* for the manufactured product. It can be found
-  at the product form view under the tab *Sales*.
-* The *Delivery Lead Time* for the preferred vendor of a product. This is
-  important for the products which are purchased and are components in any
-  Bill of Materials.
+  * The *Manufacturing Lead Time* for the manufactured product. It can be found
+    at the product form view under the tab *Sales*.
+  * The *Delivery Lead Time* for the preferred vendor of a product. This is
+    important for the products which are purchased and are components in any
+    Bill of Materials.
 
 B) For purchased/distributed products' buffers the logic is simpler.
 
-* In the first place the system will look if there are Vendors for the product,
-  if so it will use the *Delivery Lead Time* of the preferred one.
-* In case of absence of vendors, the *Lead Time* at the bottom of the Buffer
-  form view will be used.
+  * In the first place the system will look if there are Vendors for the product,
+    if so it will use the *Delivery Lead Time* of the preferred one.
+  * In case of absence of vendors, the *Lead Time* at the bottom of the Buffer
+    form view will be used.
 
 Usage
 =====
