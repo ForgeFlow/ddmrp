@@ -82,6 +82,7 @@ Modules from http://github.com/OCA/stock-logistics-warehouse :
 * 'stock_available_unreserved'
 * 'stock_orderpoint_uom'
 * 'stock_orderpoint_manual_procurement'
+* 'stock_orderpoint_purchase_link'
 * 'stock_demand_estimate'
 
 Modules from http://github.com/OCA/server-tools
