@@ -8,6 +8,13 @@
         <field name="model">mrp.bom</field>
         <field name="inherit_id" ref="mrp.mrp_bom_form_view"/>
         <field name="arch" type="xml">
+            <sheet position="before">
+                <field name="has_mto_rule_exception" invisible="True"/>
+                <div class="alert alert-danger alert-dismissable" role="alert" style="margin-bottom:0px;"
+                     attrs="{'invisible':[('has_mto_rule_exception','=', False)]}">
+                    <bold><field name="has_mto_rule_exception_msg" readonly="True"/></bold>
+                </div>
+            </sheet>
             <field name="routing_id" position="before">
                 <field name="is_buffered"/>
                 <field name="has_mto_rule"/>
@@ -19,6 +26,15 @@
                 <field name="has_mto_rule"/>
                 <field name="orderpoint_id"/>
                 <field name="dlt"/>
+                <field name="has_mto_rule_exception" invisible="1"/>
+                <button string="MTO Exception"
+                        attrs="{'invisible': [('has_mto_rule_exception', '=', False)]}"
+                        name="action_mto_rule_exception"
+                        type="object"
+                        icon="fa-exclamation-triangle"/>
+            </xpath>
+            <xpath expr="//field[@name='bom_line_ids']/tree" position="attributes">
+                <attribute name="decoration-danger">has_mto_rule_exception is True</attribute>
             </xpath>
         </field>
     </record>

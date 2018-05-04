@@ -3,7 +3,9 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from openerp import api, fields, models
+from openerp import api, fields, models, _
+from openerp.exceptions import UserError
+
 _logger = logging.getLogger(__name__)
 
 
@@ -27,6 +29,11 @@ class MrpBom(models.Model):
         help="Follows an MTO Pull Rule",
         compute="_compute_mto_rule",
     )
+    has_mto_rule_exception = fields.Char(string="MTO Exception",
+                                         compute="_compute_mto_rule",
+                                         default=False)
+    has_mto_rule_exception_msg = fields.Char(string="MTO Exception Message",
+                                             compute="_compute_mto_rule")
 
     def _get_search_buffer_domain(self):
         product = self.product_id or \
@@ -47,10 +54,31 @@ class MrpBom(models.Model):
 
     def _compute_mto_rule(self):
         for rec in self:
-            template = rec.product_id.product_tmpl_id or rec.product_tmpl_id
-            rec.has_mto_rule = True if (
-                rec.location_id in
-                template.mrp_mts_mto_location_ids) else False
+            product = rec.product_id or rec.product_tmpl_id
+            try:
+                mto_route = self.env['stock.warehouse']._get_mto_route()
+            except:
+                mto_route = False
+            routes = product.route_ids + product.route_from_categ_ids
+            # TODO: optimize with read_group?
+            pulls = self.env['procurement.rule'].search(
+                [('route_id', 'in', [x.id for x in routes]),
+                 ('location_id', '=', rec.location_id.id),
+                 ('location_src_id', '!=', False)])
+            if len(pulls.mapped('procure_method')) > 1:
+                rec.has_mto_rule_exception = True
+                rec.has_mto_rule_exception_msg = _(
+                    "This product has mixed Make to Stock / Make to Order "
+                    "pull rules for the selected location.")
+                rec.has_mto_rule = False
+            if pulls and all(pm == 'make_to_order' for pm in pulls.mapped(
+                    'procure_method')):
+                rec.has_mto_rule = True
+            elif not pulls:
+                if mto_route and mto_route.id in [x.id for x in routes]:
+                    rec.has_mto_rule = True
+            else:  # There's some make_to_stock rule
+                rec.has_mto_rule = False
 
     @api.multi
     def _get_longest_path(self):
@@ -124,6 +152,11 @@ class MrpBomLine(models.Model):
         help="Follows an MTO Pull Rule",
         compute="_compute_mto_rule",
     )
+    has_mto_rule_exception = fields.Char(string="MTO Exception",
+                                         compute="_compute_mto_rule",
+                                         default=False)
+    has_mto_rule_exception_msg = fields.Char(string="MTO Exception Message",
+                                             compute="_compute_mto_rule")
 
     def _get_search_buffer_domain(self):
         product = self.product_id or \
@@ -152,6 +185,32 @@ class MrpBomLine(models.Model):
 
     def _compute_mto_rule(self):
         for rec in self:
-            rec.has_mto_rule = True if (
-                rec.location_id in
-                rec.product_id.mrp_mts_mto_location_ids) else False
+            product = rec.product_id
+            try:
+                mto_route = self.env['stock.warehouse']._get_mto_route()
+            except:
+                mto_route = False
+            routes = product.route_ids + product.route_from_categ_ids
+            # TODO: optimize with read_group?
+            pulls = self.env['procurement.rule'].search(
+                [('route_id', 'in', [x.id for x in routes]),
+                 ('location_id', '=', rec.location_id.id),
+                 ('location_src_id', '!=', False)])
+            if len(pulls.mapped('procure_method')) > 1:
+                rec.has_mto_rule_exception = True
+                rec.has_mto_rule_exception_msg = _(
+                    "This product has mixed Make to Stock / Make to Order "
+                    "pull rules for the selected location.")
+                rec.has_mto_rule = False
+            if pulls and all(pm == 'make_to_order' for pm in pulls.mapped(
+                    'procure_method')):
+                rec.has_mto_rule = True
+            elif not pulls:
+                if mto_route and mto_route.id in [x.id for x in routes]:
+                    rec.has_mto_rule = True
+            else:  # There's some make_to_stock rule
+                rec.has_mto_rule = False
+
+    @api.multi
+    def action_mto_rule_exception(self):
+        raise UserError(self.has_mto_rule_exception_msg)
