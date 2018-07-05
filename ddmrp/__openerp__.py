@@ -44,6 +44,7 @@
              "views/mrp_bom_view.xml",
              "views/report_mrpbomstructure.xml",
              "data/ir_cron.xml",
+             "data/stock.buffer.profile.csv",
              ],
     "demo": [
         "demo/res_partner_demo.xml",
