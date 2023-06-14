@@ -15,6 +15,19 @@ class DdmrpWarningItem(models.Model):
     severity = fields.Selection(
         related="warning_definition_id.severity", store=True, readonly=True,
     )
+    company_id = fields.Many2one(
+        comodel_name="res.company",
+        string="Company",
+        compute="_compute_company",
+        store=True,
+    )
+
+    def _compute_company(self):
+        for rec in self:
+            if rec.buffer_id:
+                rec.company_id = rec.buffer_id.company_id
+            else:
+                rec.company_id = self.env.company
 
     def _compute_name(self):
         for rec in self:
