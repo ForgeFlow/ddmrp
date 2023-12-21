@@ -34,6 +34,8 @@ class MrpBom(models.Model):
         domain = [("product_id", "=", product.id)]
         if self.location_id:
             domain.append(("location_id", "=", self.location_id.id))
+        if "location_id" in self._context:
+            domain.append(("location_id", "=", self._context["location_id"]))
         if self.company_id:
             domain.append(("company_id", "=", self.company_id.id))
         return domain
@@ -130,6 +132,8 @@ class MrpBomLine(models.Model):
         domain = [("product_id", "=", product.id)]
         if self.location_id:
             domain.append(("location_id", "=", self.location_id.id))
+        if "location_id" in self._context:
+            domain.append(("location_id", "=", self._context["location_id"]))
         if self.company_id:
             domain.append(("company_id", "=", self.company_id.id))
         return domain
