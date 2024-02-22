@@ -41,7 +41,7 @@
         <field name="name">Buffer Adjustments</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">ddmrp.adjustment</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">tree,graph,form</field>
     </record>
     <menuitem
         id="menu_ddmrp_adjustment"
